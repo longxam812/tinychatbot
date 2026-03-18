@@ -611,7 +611,13 @@
       const page = document.createElement("div");
       page.style.display = "flex";
       page.style.flexDirection = "column";
-      page.style.minHeight = "100vh";
+      page.style.height = "85vh";
+      page.style.maxHeight = "760px";
+      page.style.margin = "12px auto";
+      page.style.background = "#fff";
+      page.style.borderRadius = "18px";
+      page.style.overflow = "hidden";
+      page.style.boxShadow = "0 8px 24px rgba(0,0,0,.06)";
 
       const hdr = el("div", "hdr");
       hdr.innerHTML = `
