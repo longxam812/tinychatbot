@@ -1,268 +1,905 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Ask Tiny Anonymously</title>
-<style>
-  *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#f9fafb;height:100vh;display:flex;align-items:center;justify-content:center}
-  #app{width:100%;max-width:480px;height:100vh;display:flex;flex-direction:column;background:#fff}
-  .hdr{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid #f0f0f0;box-shadow:0 1px 3px #0001}
-  .av{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;flex-shrink:0}
-  .hdr-name{font-weight:700;font-size:16px}
-  .hdr-sub{font-size:11px;color:#10b981}
-  .msgs{flex:1;overflow-y:auto;padding:16px 14px;display:flex;flex-direction:column;gap:2px}
-  .bot-row{display:flex;align-items:flex-end;gap:8px;margin-bottom:10px}
-  .bot-bub{background:#f3f4f6;border-radius:18px 18px 18px 4px;padding:10px 14px;font-size:14px;max-width:300px;line-height:1.55;color:#1e1e1e;white-space:pre-wrap}
-  .user-bub{background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:18px 18px 4px 18px;padding:10px 14px;font-size:14px;max-width:300px;color:#fff;line-height:1.55}
-  .user-wrap{display:flex;flex-direction:column;align-items:flex-end;margin-bottom:10px}
-  .ts{font-size:10px;color:#d1d5db;margin-top:3px;padding:0 4px}
-  .bot-name{font-size:11px;color:#9ca3af;margin-bottom:2px;padding-left:2px}
-  .typing{display:flex;gap:4px;align-items:center;padding:4px 2px}
-  .dot{width:7px;height:7px;border-radius:50%;background:#9ca3af;animation:bop 1s infinite}
-  .dot:nth-child(2){animation-delay:.2s}
-  .dot:nth-child(3){animation-delay:.4s}
-  @keyframes bop{0%,80%,100%{transform:translateY(0)}40%{transform:translateY(-5px)}}
-  .input-row{display:flex;padding:10px 14px;border-top:1px solid #f0f0f0;gap:8px;background:#fff}
-  .inp{flex:1;border:1.5px solid #e5e7eb;border-radius:24px;padding:10px 16px;font-size:14px;outline:none;background:#fafafa}
-  .send-btn{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-  .home{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;padding:24px;text-align:center;gap:16px}
-  .home h1{font-size:22px;font-weight:800;color:#111}
-  .home p{font-size:14px;color:#6b7280;line-height:1.6}
-  .big-btn{width:100%;padding:13px 0;border-radius:14px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;font-weight:700;font-size:15px;border:none;cursor:pointer}
-  .sec-btn{width:100%;padding:13px 0;border-radius:14px;background:#f3f4f6;color:#374151;font-weight:700;font-size:15px;border:none;cursor:pointer}
-  .login{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;padding:24px;gap:12px}
-  .login h2{font-size:20px;font-weight:800}
-  .login input{width:100%;padding:12px 16px;border:1.5px solid #e5e7eb;border-radius:14px;font-size:15px;outline:none}
-  .err{color:#ef4444;font-size:12px}
-  .back{font-size:13px;color:#6366f1;cursor:pointer;margin-top:4px}
-  .admin{display:flex;height:100vh;overflow:hidden}
-  .sidebar{width:260px;border-right:1px solid #f0f0f0;overflow-y:auto;flex-shrink:0}
-  .side-top{padding:14px 16px;font-weight:700;font-size:14px;border-bottom:1px solid #f0f0f0}
-  .sess-item{display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer;border-bottom:1px solid #f9f9f9}
-  .sess-item:hover{background:#f9fafb}
-  .sess-item.active{background:#eff6ff}
-  .sess-id{font-weight:600;font-size:13px}
-  .sess-prev{font-size:11px;color:#9ca3af;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .badge{min-width:20px;height:20px;border-radius:10px;background:#ef4444;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 5px}
-  .chat-panel{flex:1;display:flex;flex-direction:column;overflow:hidden}
-  .chat-hdr{padding:14px 18px;font-weight:700;font-size:15px;border-bottom:1px solid #f0f0f0;flex-shrink:0}
-  .none-sel{flex:1;display:flex;align-items:center;justify-content:center;color:#9ca3af;font-size:14px}
-  .admin-input{display:flex;padding:10px 14px;border-top:1px solid #f0f0f0;gap:8px;background:#fff;flex-shrink:0}
-  .empty-note{padding:16px;font-size:13px;color:#aaa}
-  @media(max-width:500px){.sidebar{width:200px}}
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ask Tiny Anonymously</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f9fafb;
+      color: #111827;
+      height: 100vh;
+    }
+    #app {
+      width: 100%;
+      max-width: 520px;
+      margin: 0 auto;
+      background: #fff;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .home, .login {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 14px;
+      padding: 24px;
+      text-align: center;
+    }
+    .home h1, .login h2 { font-size: 24px; font-weight: 800; }
+    .home p, .muted { color: #6b7280; line-height: 1.6; font-size: 14px; }
+    .btn {
+      border: none;
+      cursor: pointer;
+      border-radius: 14px;
+      padding: 13px 16px;
+      font-weight: 700;
+      font-size: 15px;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      color: white;
+    }
+    .btn-secondary {
+      background: #f3f4f6;
+      color: #374151;
+    }
+    .input {
+      width: 100%;
+      border: 1.5px solid #e5e7eb;
+      border-radius: 14px;
+      padding: 12px 14px;
+      font-size: 14px;
+      outline: none;
+      background: #fff;
+    }
+    .session-box {
+      background: #fafafa;
+      border: 1px dashed #d1d5db;
+      border-radius: 14px;
+      padding: 12px;
+    }
+    .session-id {
+      font-size: 16px;
+      font-weight: 800;
+      color: #4f46e5;
+      letter-spacing: 1.5px;
+    }
+
+    .hdr {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 16px;
+      border-bottom: 1px solid #f3f4f6;
+      box-shadow: 0 1px 3px rgba(0,0,0,.04);
+      background: #fff;
+      position: sticky;
+      top: 0;
+      z-index: 5;
+    }
+    .av {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      color: #fff;
+      font-weight: 800;
+      flex-shrink: 0;
+    }
+    .hdr-name { font-weight: 800; font-size: 16px; }
+    .hdr-sub { font-size: 12px; color: #10b981; }
+
+    .msgs {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      background: #fff;
+    }
+
+    .bot-row {
+      display: flex;
+      align-items: flex-end;
+      gap: 8px;
+      margin-bottom: 2px;
+    }
+    .bot-col, .user-col {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .bot-name {
+      font-size: 11px;
+      color: #9ca3af;
+      padding-left: 2px;
+    }
+    .bot-bub {
+      background: #f3f4f6;
+      color: #111827;
+      padding: 10px 14px;
+      border-radius: 18px 18px 18px 4px;
+      max-width: 320px;
+      line-height: 1.55;
+      white-space: pre-wrap;
+      font-size: 14px;
+    }
+    .user-wrap {
+      display: flex;
+      justify-content: flex-end;
+    }
+    .user-col {
+      align-items: flex-end;
+    }
+    .user-bub {
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      color: white;
+      padding: 10px 14px;
+      border-radius: 18px 18px 4px 18px;
+      max-width: 320px;
+      line-height: 1.55;
+      white-space: pre-wrap;
+      font-size: 14px;
+    }
+    .ts {
+      font-size: 10px;
+      color: #9ca3af;
+      padding: 0 4px;
+    }
+
+    .typing {
+      display: flex;
+      gap: 4px;
+      padding: 2px 0;
+      align-items: center;
+    }
+    .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #9ca3af;
+      animation: bounce 1s infinite;
+    }
+    .dot:nth-child(2) { animation-delay: .2s; }
+    .dot:nth-child(3) { animation-delay: .4s; }
+
+    @keyframes bounce {
+      0%, 80%, 100% { transform: translateY(0); }
+      40% { transform: translateY(-5px); }
+    }
+
+    .input-row, .admin-input {
+      display: flex;
+      gap: 8px;
+      padding: 10px 14px;
+      border-top: 1px solid #f3f4f6;
+      background: #fff;
+    }
+    .msg-input {
+      flex: 1;
+      border: 1.5px solid #e5e7eb;
+      border-radius: 24px;
+      padding: 11px 15px;
+      font-size: 14px;
+      outline: none;
+      background: #fafafa;
+    }
+    .send-btn {
+      width: 42px;
+      height: 42px;
+      flex-shrink: 0;
+      border: none;
+      border-radius: 50%;
+      cursor: pointer;
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      color: white;
+      font-size: 18px;
+      font-weight: 800;
+    }
+
+    .admin {
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
+    .sidebar {
+      width: 260px;
+      border-right: 1px solid #f3f4f6;
+      overflow-y: auto;
+      flex-shrink: 0;
+      background: #fff;
+    }
+    .side-top {
+      padding: 14px 16px;
+      border-bottom: 1px solid #f3f4f6;
+      font-weight: 800;
+      font-size: 14px;
+      position: sticky;
+      top: 0;
+      background: #fff;
+      z-index: 2;
+    }
+    .sess-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 14px;
+      border-bottom: 1px solid #fafafa;
+      cursor: pointer;
+    }
+    .sess-item:hover { background: #f9fafb; }
+    .sess-item.active { background: #eff6ff; }
+    .sess-id-line { font-size: 13px; font-weight: 700; }
+    .sess-prev {
+      font-size: 11px;
+      color: #9ca3af;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .badge {
+      min-width: 20px;
+      height: 20px;
+      border-radius: 10px;
+      background: #ef4444;
+      color: white;
+      font-size: 11px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 6px;
+    }
+    .chat-panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .chat-hdr {
+      padding: 14px 18px;
+      border-bottom: 1px solid #f3f4f6;
+      font-weight: 800;
+      font-size: 15px;
+      background: #fff;
+    }
+    .empty-note, .none-sel {
+      padding: 16px;
+      color: #9ca3af;
+      font-size: 14px;
+    }
+
+    .linkish {
+      color: #4f46e5;
+      cursor: pointer;
+      font-size: 13px;
+    }
+    .err {
+      color: #ef4444;
+      font-size: 12px;
+      text-align: left;
+    }
+
+    @media (max-width: 640px) {
+      .admin {
+        flex-direction: column;
+      }
+      .sidebar {
+        width: 100%;
+        height: 220px;
+        border-right: none;
+        border-bottom: 1px solid #f3f4f6;
+      }
+    }
+  </style>
 </head>
 <body>
-<div id="app"></div>
-<script>
-const SUPABASE_URL = "https://wnjqnqifkpivngzatkpm.supabase.co";
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InduanFucWlma3Bpdm5nemF0a3BtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4MjE2MzYsImV4cCI6MjA4OTM5NzYzNn0.rys_oKVAhi-0k3LSN2_XGYIv4J_c7FzmIbBsGD3UStk";
-const CLAUDE_KEY = "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";
-const ADMIN_PASS = "tiny2024";
-const WELCOME = "Hi! What would you like to send to Tiny? 😊\n\n1️⃣ Question\n2️⃣ Feedback\n3️⃣ Inquiry\n4️⃣ Other request";
+  <div id="app"></div>
 
-// ── SUPABASE ─────────────────────────────────────────────────────────────────
-const h = {"apikey":SUPABASE_KEY,"Authorization":`Bearer ${SUPABASE_KEY}`,"Content-Type":"application/json"};
-const db = {
-  async insert(row){await fetch(`${SUPABASE_URL}/rest/v1/messages`,{method:"POST",headers:h,body:JSON.stringify(row)});},
-  async getSessions(){
-    const r=await fetch(`${SUPABASE_URL}/rest/v1/messages?select=session_id&order=created_at.asc`,{headers:h});
-    const d=await r.json(); return [...new Set(d.map(x=>x.session_id))];
-  },
-  async getMsgs(sid){
-    const r=await fetch(`${SUPABASE_URL}/rest/v1/messages?session_id=eq.${sid}&order=created_at.asc`,{headers:h});
-    return r.json();
-  },
-  async markRead(sid){
-    await fetch(`${SUPABASE_URL}/rest/v1/messages?session_id=eq.${sid}&role=eq.user&read=eq.false`,{method:"PATCH",headers:h,body:JSON.stringify({read:true})});
-  },
-  async unread(sid){
-    const r=await fetch(`${SUPABASE_URL}/rest/v1/messages?session_id=eq.${sid}&role=eq.user&read=eq.false&select=id`,{headers:h});
-    const d=await r.json(); return d.length;
-  }
-};
+  <script>
+    const SUPABASE_URL = "https://YOUR_PROJECT_ID.supabase.co";
+    const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY";
+    const ADMIN_PASS = "tiny2024";
+    const WELCOME_TEXT =
+`Hi! What would you like to send to Tiny? 😊
 
-// ── CLAUDE via Supabase Edge Function ────────────────────────────────────────
-async function askAI(msgs) {
-  const r = await fetch(`${SUPABASE_URL}/functions/v1/chat`, {
-    method:"POST",
-    headers:{"Content-Type":"application/json","Authorization":`Bearer ${SUPABASE_KEY}`},
-    body:JSON.stringify({messages: msgs.map(m=>({role:m.role==="user"?"user":"assistant",content:m.text}))})
-  });
-  const d = await r.json();
-  return d.reply || "Got it! Tiny will get back to you soon 😊";
-}
+1️⃣ Question
+2️⃣ Feedback
+3️⃣ Inquiry
+4️⃣ Other request`;
 
-// ── UTILS ─────────────────────────────────────────────────────────────────────
-const uid=()=>Math.random().toString(36).slice(2,8);
-const fmt=ts=>new Date(ts).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"});
-const el=(tag,cls,html)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(html)e.innerHTML=html;return e;};
+    const defaultHeaders = {
+      "apikey": SUPABASE_ANON_KEY,
+      "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+      "Content-Type": "application/json"
+    };
 
-function botBubble(text,ts=0){
-  const row=el("div","bot-row"),av=el("div","av","T"),wrap=el("div"),name=el("div","bot-name","Tiny"),bub=el("div","bot-bub");
-  bub.textContent=text; wrap.appendChild(name); wrap.appendChild(bub);
-  if(ts>0){const t=el("div","ts",fmt(ts));wrap.appendChild(t);}
-  row.appendChild(av);row.appendChild(wrap);return row;
-}
-function userBubble(text,ts){
-  const wrap=el("div","user-wrap"),bub=el("div","user-bub"),t=el("div","ts",fmt(ts));
-  bub.textContent=text;t.style.textAlign="right";
-  wrap.appendChild(bub);wrap.appendChild(t);return wrap;
-}
-function typingBubble(){
-  const row=el("div","bot-row"),av=el("div","av","T"),bub=el("div","bot-bub");
-  bub.innerHTML=`<div class="typing"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>`;
-  row.appendChild(av);row.appendChild(bub);return row;
-}
+    const qs = (obj) => new URLSearchParams(obj).toString();
 
-// ── HOME ──────────────────────────────────────────────────────────────────────
-function renderHome(){
-  const app=document.getElementById("app");app.innerHTML="";
-  const sid=uid();
-  const div=el("div","home");
-  div.innerHTML=`<div style="font-size:52px">🦔</div><h1>Ask Tiny Anonymously</h1><p>Ask anything without worrying about who sees it 💬<br/>AI confirms receipt, Tiny will reply directly</p>`;
-  const b1=el("button","big-btn","💬 Ask anonymously");b1.onclick=()=>renderChat(sid);
-  const qr=el("div");qr.style.cssText="background:#fafafa;border-radius:14px;padding:12px 16px;width:100%;border:1px dashed #e5e7eb;text-align:center";
-  qr.innerHTML=`<div style="font-size:11px;color:#9ca3af;margin-bottom:4px">Your Session ID</div><div style="font-weight:700;font-size:15px;color:#4f46e5;letter-spacing:2px">#${sid}</div>`;
-  const b2=el("button","sec-btn","🔐 Tiny login");b2.onclick=renderLogin;
-  div.appendChild(b1);div.appendChild(qr);div.appendChild(b2);app.appendChild(div);
-}
-
-// ── LOGIN ─────────────────────────────────────────────────────────────────────
-function renderLogin(){
-  const app=document.getElementById("app");app.innerHTML="";
-  const div=el("div","login");
-  div.innerHTML=`<div style="font-size:40px">🔒</div><h2>Tiny Dashboard</h2>`;
-  const inp=el("input");inp.type="password";inp.placeholder="Password...";
-  const err=el("div","err");
-  const btn=el("button","big-btn","Login");
-  const back=el("div","back","← Back");back.onclick=renderHome;
-  btn.onclick=()=>{if(inp.value===ADMIN_PASS)renderAdmin();else err.textContent="Wrong password!";};
-  inp.onkeydown=e=>{if(e.key==="Enter")btn.click();};
-  div.appendChild(inp);div.appendChild(err);div.appendChild(btn);div.appendChild(back);app.appendChild(div);
-}
-
-// ── USER CHAT ─────────────────────────────────────────────────────────────────
-async function renderChat(sid){
-  const app=document.getElementById("app");app.innerHTML="";
-  const page=el("div");page.style.cssText="display:flex;flex-direction:column;height:100vh";
-  const hdr=el("div","hdr");hdr.innerHTML=`<div class="av">T</div><div><div class="hdr-name">Tiny 🦔</div><div class="hdr-sub">Anonymous & secure</div></div>`;
-  const msgs=el("div","msgs");
-  const row=el("div","input-row");
-  const inp=el("input","inp");inp.placeholder="Type a message...";
-  const btn=el("button","send-btn");btn.innerHTML=`<svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg>`;
-  row.appendChild(inp);row.appendChild(btn);
-  page.appendChild(hdr);page.appendChild(msgs);page.appendChild(row);app.appendChild(page);
-
-  msgs.appendChild(botBubble(WELCOME));
-  const existing=await db.getMsgs(sid);
-  existing.forEach(m=>{
-    if(m.role==="user")msgs.appendChild(userBubble(m.text,new Date(m.created_at).getTime()));
-    else msgs.appendChild(botBubble(m.text,new Date(m.created_at).getTime()));
-  });
-  msgs.scrollTop=msgs.scrollHeight;
-
-  let lastCount=existing.length;
-  setInterval(async()=>{
-    const all=await db.getMsgs(sid);
-    if(all.length>lastCount){
-      for(let i=lastCount;i<all.length;i++){
-        const m=all[i];
-        if(m.role==="bot")msgs.appendChild(botBubble(m.text,new Date(m.created_at).getTime()));
-      }
-      lastCount=all.length;msgs.scrollTop=msgs.scrollHeight;
+    function uid() {
+      return Math.random().toString(36).slice(2, 8);
     }
-  },3000);
 
-  let busy=false;
-  const send=async()=>{
-    const txt=inp.value.trim();if(!txt||busy)return;
-    busy=true;inp.value="";
-    msgs.appendChild(userBubble(txt,Date.now()));msgs.scrollTop=msgs.scrollHeight;
-    await db.insert({session_id:sid,role:"user",text:txt});
-    const typing=typingBubble();msgs.appendChild(typing);msgs.scrollTop=msgs.scrollHeight;
-    try{
-      const all=await db.getMsgs(sid);
-      const reply=await askAI(all);
-      await db.insert({session_id:sid,role:"bot",text:reply});
-      msgs.removeChild(typing);
-      msgs.appendChild(botBubble(reply,Date.now()));
-    }catch{
-      msgs.removeChild(typing);
-      msgs.appendChild(botBubble("Got it! Tiny will get back to you soon 😊",Date.now()));
-    }
-    msgs.scrollTop=msgs.scrollHeight;
-    lastCount=(await db.getMsgs(sid)).length;
-    busy=false;
-  };
-  btn.onclick=send;inp.onkeydown=e=>{if(e.key==="Enter")send();};
-}
-
-// ── ADMIN ─────────────────────────────────────────────────────────────────────
-async function renderAdmin(){
-  const app=document.getElementById("app");app.innerHTML="";
-  const wrap=el("div","admin");
-  const sidebar=el("div","sidebar");
-  sidebar.appendChild(el("div","side-top","📥 Questions"));
-  const panel=el("div","chat-panel");
-  panel.appendChild(el("div","none-sel","👈 Select a conversation"));
-  wrap.appendChild(sidebar);wrap.appendChild(panel);app.appendChild(wrap);
-
-  let sel=null,pollTimer=null;
-
-  async function loadSidebar(){
-    const ids=await db.getSessions();
-    while(sidebar.children.length>1)sidebar.removeChild(sidebar.lastChild);
-    if(!ids.length){sidebar.appendChild(el("div","empty-note","No messages yet"));return;}
-    for(const id of ids){
-      const u=await db.unread(id);
-      const ms=await db.getMsgs(id);
-      const last=ms.slice(-1)[0];
-      const item=el("div","sess-item");
-      if(id===sel)item.classList.add("active");
-      item.innerHTML=`<div class="av" style="width:34px;height:34px;font-size:13px">?</div><div style="flex:1;overflow:hidden"><div class="sess-id">Anonymous #${id}</div><div class="sess-prev">${(last?.text||"").slice(0,28)}…</div></div>${u>0?`<div class="badge">${u}</div>`:""}`;
-      item.onclick=()=>openSession(id);
-      sidebar.appendChild(item);
-    }
-  }
-
-  async function openSession(id){
-    sel=id;await db.markRead(id);
-    panel.innerHTML="";
-    const hdr=el("div","chat-hdr",`Anonymous #${id}`);
-    const msgs=el("div","msgs");
-    const irow=el("div","admin-input");
-    const inp=el("input","inp");inp.placeholder="Type a reply...";
-    const sbtn=el("button","send-btn");sbtn.innerHTML=`<svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg>`;
-    irow.appendChild(inp);irow.appendChild(sbtn);
-    panel.appendChild(hdr);panel.appendChild(msgs);panel.appendChild(irow);
-
-    const loadMsgs=async()=>{
-      const all=await db.getMsgs(id);msgs.innerHTML="";
-      all.forEach(m=>{
-        if(m.role==="user")msgs.appendChild(userBubble(m.text,new Date(m.created_at).getTime()));
-        else msgs.appendChild(botBubble(m.text,new Date(m.created_at).getTime()));
+    function fmtTime(ts) {
+      return new Date(ts).toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit"
       });
-      msgs.scrollTop=msgs.scrollHeight;return all;
-    };
-    let all=await loadMsgs();
-    if(pollTimer)clearInterval(pollTimer);
-    pollTimer=setInterval(async()=>{all=await loadMsgs();},4000);
+    }
 
-    const sendReply=async()=>{
-      const txt=inp.value.trim();if(!txt)return;
-      await db.insert({session_id:id,role:"bot",text:txt});
-      inp.value="";all=await loadMsgs();loadSidebar();
-    };
-    sbtn.onclick=sendReply;inp.onkeydown=e=>{if(e.key==="Enter")sendReply();};
-    loadSidebar();
-  }
-  loadSidebar();setInterval(loadSidebar,5000);
-}
+    function el(tag, className, text) {
+      const node = document.createElement(tag);
+      if (className) node.className = className;
+      if (text !== undefined) node.textContent = text;
+      return node;
+    }
 
-renderHome();
-</script>
+    const db = {
+      async insertMessage(row) {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/messages`, {
+          method: "POST",
+          headers: defaultHeaders,
+          body: JSON.stringify(row)
+        });
+
+        if (!res.ok) {
+          const raw = await res.text();
+          throw new Error(`Insert failed: ${raw}`);
+        }
+      },
+
+      async getMessages(sessionId) {
+        const url = `${SUPABASE_URL}/rest/v1/messages?${qs({
+          select: "*",
+          session_id: `eq.${sessionId}`,
+          order: "created_at.asc"
+        })}`;
+
+        const res = await fetch(url, { headers: defaultHeaders });
+        if (!res.ok) {
+          const raw = await res.text();
+          throw new Error(`Fetch messages failed: ${raw}`);
+        }
+        return await res.json();
+      },
+
+      async getSessions() {
+        const url = `${SUPABASE_URL}/rest/v1/messages?${qs({
+          select: "session_id,created_at,text"
+        })}`;
+
+        const res = await fetch(url, { headers: defaultHeaders });
+        if (!res.ok) {
+          const raw = await res.text();
+          throw new Error(`Fetch sessions failed: ${raw}`);
+        }
+
+        const rows = await res.json();
+        const map = new Map();
+
+        for (const row of rows) {
+          if (!map.has(row.session_id)) {
+            map.set(row.session_id, []);
+          }
+          map.get(row.session_id).push(row);
+        }
+
+        const sessions = [];
+        for (const [sessionId, items] of map.entries()) {
+          items.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+          const last = items[items.length - 1];
+          sessions.push({
+            session_id: sessionId,
+            last_text: last?.text || "",
+            last_created_at: last?.created_at || null
+          });
+        }
+
+        sessions.sort((a, b) => {
+          return new Date(b.last_created_at || 0) - new Date(a.last_created_at || 0);
+        });
+
+        return sessions;
+      },
+
+      async getUnreadCount(sessionId) {
+        const url = `${SUPABASE_URL}/rest/v1/messages?${qs({
+          select: "id",
+          session_id: `eq.${sessionId}`,
+          role: "eq.user",
+          read: "eq.false"
+        })}`;
+
+        const res = await fetch(url, { headers: defaultHeaders });
+        if (!res.ok) {
+          const raw = await res.text();
+          throw new Error(`Unread query failed: ${raw}`);
+        }
+
+        const rows = await res.json();
+        return rows.length;
+      },
+
+      async markUserMessagesRead(sessionId) {
+        const url = `${SUPABASE_URL}/rest/v1/messages?${qs({
+          session_id: `eq.${sessionId}`,
+          role: "eq.user",
+          read: "eq.false"
+        })}`;
+
+        const res = await fetch(url, {
+          method: "PATCH",
+          headers: defaultHeaders,
+          body: JSON.stringify({ read: true })
+        });
+
+        if (!res.ok) {
+          const raw = await res.text();
+          throw new Error(`Mark read failed: ${raw}`);
+        }
+      }
+    };
+
+    async function askAI(messages) {
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/chat`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${SUPABASE_ANON_KEY}`
+        },
+        body: JSON.stringify({
+          messages: messages.map(m => ({
+            role: m.role === "user" ? "user" : "assistant",
+            content: m.text
+          }))
+        })
+      });
+
+      const raw = await res.text();
+
+      if (!res.ok) {
+        throw new Error(`Edge function failed: ${raw}`);
+      }
+
+      const data = JSON.parse(raw);
+      return data.reply || "Got it! Tiny will get back to you soon 😊";
+    }
+
+    function makeBotBubble(text, ts) {
+      const row = el("div", "bot-row");
+      const avatar = el("div", "av", "T");
+      const col = el("div", "bot-col");
+      const name = el("div", "bot-name", "Tiny");
+      const bubble = el("div", "bot-bub", text);
+
+      col.appendChild(name);
+      col.appendChild(bubble);
+
+      if (ts) {
+        const time = el("div", "ts", fmtTime(ts));
+        col.appendChild(time);
+      }
+
+      row.appendChild(avatar);
+      row.appendChild(col);
+      return row;
+    }
+
+    function makeUserBubble(text, ts) {
+      const wrap = el("div", "user-wrap");
+      const col = el("div", "user-col");
+      const bubble = el("div", "user-bub", text);
+      const time = el("div", "ts", fmtTime(ts));
+
+      col.appendChild(bubble);
+      col.appendChild(time);
+      wrap.appendChild(col);
+      return wrap;
+    }
+
+    function makeTypingBubble() {
+      const row = el("div", "bot-row");
+      const avatar = el("div", "av", "T");
+      const col = el("div", "bot-col");
+      const bubble = el("div", "bot-bub");
+
+      const typing = el("div", "typing");
+      typing.appendChild(el("span", "dot"));
+      typing.appendChild(el("span", "dot"));
+      typing.appendChild(el("span", "dot"));
+
+      bubble.appendChild(typing);
+      col.appendChild(el("div", "bot-name", "Tiny"));
+      col.appendChild(bubble);
+      row.appendChild(avatar);
+      row.appendChild(col);
+      return row;
+    }
+
+    function scrollBottom(node) {
+      node.scrollTop = node.scrollHeight;
+    }
+
+    function renderHome() {
+      const app = document.getElementById("app");
+      app.innerHTML = "";
+
+      const sessionId = uid();
+      const page = el("div", "home");
+
+      const icon = el("div", null, "🦔");
+      icon.style.fontSize = "54px";
+
+      const title = el("h1", null, "Ask Tiny Anonymously");
+      const desc = el("p", null, "Ask anything without worrying about who sees it. AI will confirm receipt, then Tiny can reply later.");
+
+      const startBtn = el("button", "btn btn-primary", "💬 Ask anonymously");
+      startBtn.onclick = () => renderChat(sessionId);
+
+      const box = el("div", "session-box");
+      box.innerHTML = `
+        <div class="muted" style="font-size:11px;margin-bottom:4px;">Your Session ID</div>
+        <div class="session-id">#${sessionId}</div>
+      `;
+
+      const loginBtn = el("button", "btn btn-secondary", "🔐 Tiny login");
+      loginBtn.onclick = renderLogin;
+
+      page.appendChild(icon);
+      page.appendChild(title);
+      page.appendChild(desc);
+      page.appendChild(startBtn);
+      page.appendChild(box);
+      page.appendChild(loginBtn);
+
+      app.appendChild(page);
+    }
+
+    function renderLogin() {
+      const app = document.getElementById("app");
+      app.innerHTML = "";
+
+      const page = el("div", "login");
+      const icon = el("div", null, "🔒");
+      icon.style.fontSize = "42px";
+
+      const title = el("h2", null, "Tiny Dashboard");
+      const input = el("input", "input");
+      input.type = "password";
+      input.placeholder = "Password...";
+      const error = el("div", "err");
+      const loginBtn = el("button", "btn btn-primary", "Login");
+      const back = el("div", "linkish", "← Back");
+
+      loginBtn.onclick = () => {
+        if (input.value === ADMIN_PASS) {
+          renderAdmin();
+        } else {
+          error.textContent = "Wrong password";
+        }
+      };
+
+      input.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") loginBtn.click();
+      });
+
+      back.onclick = renderHome;
+
+      page.appendChild(icon);
+      page.appendChild(title);
+      page.appendChild(input);
+      page.appendChild(error);
+      page.appendChild(loginBtn);
+      page.appendChild(back);
+
+      app.appendChild(page);
+    }
+
+    async function renderChat(sessionId) {
+      const app = document.getElementById("app");
+      app.innerHTML = "";
+
+      const page = document.createElement("div");
+      page.style.display = "flex";
+      page.style.flexDirection = "column";
+      page.style.minHeight = "100vh";
+
+      const hdr = el("div", "hdr");
+      hdr.innerHTML = `
+        <div class="av">T</div>
+        <div>
+          <div class="hdr-name">Tiny 🦔</div>
+          <div class="hdr-sub">Anonymous & secure</div>
+        </div>
+      `;
+
+      const msgs = el("div", "msgs");
+      const inputRow = el("div", "input-row");
+      const input = el("input", "msg-input");
+      input.placeholder = "Type a message...";
+      const sendBtn = el("button", "send-btn", "➜");
+
+      inputRow.appendChild(input);
+      inputRow.appendChild(sendBtn);
+
+      page.appendChild(hdr);
+      page.appendChild(msgs);
+      page.appendChild(inputRow);
+      app.appendChild(page);
+
+      msgs.appendChild(makeBotBubble(WELCOME_TEXT));
+
+      try {
+        const existing = await db.getMessages(sessionId);
+        for (const m of existing) {
+          const ts = new Date(m.created_at).getTime();
+          msgs.appendChild(
+            m.role === "user"
+              ? makeUserBubble(m.text, ts)
+              : makeBotBubble(m.text, ts)
+          );
+        }
+        scrollBottom(msgs);
+      } catch (err) {
+        msgs.appendChild(makeBotBubble("Could not load previous messages."));
+        console.error(err);
+      }
+
+      let busy = false;
+      let lastCount = 0;
+
+      async function refreshMessages() {
+        try {
+          const all = await db.getMessages(sessionId);
+          if (all.length === lastCount) return;
+
+          msgs.innerHTML = "";
+          msgs.appendChild(makeBotBubble(WELCOME_TEXT));
+
+          for (const m of all) {
+            const ts = new Date(m.created_at).getTime();
+            msgs.appendChild(
+              m.role === "user"
+                ? makeUserBubble(m.text, ts)
+                : makeBotBubble(m.text, ts)
+            );
+          }
+
+          lastCount = all.length;
+          scrollBottom(msgs);
+        } catch (err) {
+          console.error("refreshMessages error:", err);
+        }
+      }
+
+      try {
+        const nowAll = await db.getMessages(sessionId);
+        lastCount = nowAll.length;
+      } catch {}
+
+      const poll = setInterval(refreshMessages, 3000);
+
+      async function sendMessage() {
+        const text = input.value.trim();
+        if (!text || busy) return;
+
+        busy = true;
+        input.disabled = true;
+        sendBtn.disabled = true;
+
+        input.value = "";
+        msgs.appendChild(makeUserBubble(text, Date.now()));
+        const typing = makeTypingBubble();
+        msgs.appendChild(typing);
+        scrollBottom(msgs);
+
+        try {
+          await db.insertMessage({
+            session_id: sessionId,
+            role: "user",
+            text,
+            read: false
+          });
+
+          const allAfterUser = await db.getMessages(sessionId);
+          const reply = await askAI(allAfterUser);
+
+          await db.insertMessage({
+            session_id: sessionId,
+            role: "bot",
+            text: reply,
+            read: true
+          });
+
+          typing.remove();
+          msgs.appendChild(makeBotBubble(reply, Date.now()));
+          scrollBottom(msgs);
+
+          const finalAll = await db.getMessages(sessionId);
+          lastCount = finalAll.length;
+        } catch (err) {
+          console.error("sendMessage error:", err);
+          typing.remove();
+          msgs.appendChild(makeBotBubble("Got it! Tiny will get back to you soon 😊", Date.now()));
+          scrollBottom(msgs);
+        } finally {
+          busy = false;
+          input.disabled = false;
+          sendBtn.disabled = false;
+          input.focus();
+        }
+      }
+
+      sendBtn.onclick = sendMessage;
+      input.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") sendMessage();
+      });
+
+      window.addEventListener("beforeunload", () => clearInterval(poll), { once: true });
+    }
+
+    async function renderAdmin() {
+      const app = document.getElementById("app");
+      app.innerHTML = "";
+
+      const wrap = el("div", "admin");
+      const sidebar = el("div", "sidebar");
+      const top = el("div", "side-top", "📥 Questions");
+      sidebar.appendChild(top);
+
+      const panel = el("div", "chat-panel");
+      panel.appendChild(el("div", "none-sel", "👈 Select a conversation"));
+
+      wrap.appendChild(sidebar);
+      wrap.appendChild(panel);
+      app.appendChild(wrap);
+
+      let selectedSession = null;
+      let panelPoll = null;
+      let sidebarPoll = null;
+
+      async function loadSidebar() {
+        try {
+          const sessions = await db.getSessions();
+
+          while (sidebar.children.length > 1) {
+            sidebar.removeChild(sidebar.lastChild);
+          }
+
+          if (!sessions.length) {
+            sidebar.appendChild(el("div", "empty-note", "No messages yet"));
+            return;
+          }
+
+          for (const s of sessions) {
+            const unread = await db.getUnreadCount(s.session_id);
+
+            const item = el("div", "sess-item");
+            if (s.session_id === selectedSession) item.classList.add("active");
+
+            const badge = unread > 0 ? `<div class="badge">${unread}</div>` : "";
+
+            item.innerHTML = `
+              <div class="av" style="width:34px;height:34px;font-size:13px">?</div>
+              <div style="flex:1;overflow:hidden;">
+                <div class="sess-id-line">Anonymous #${s.session_id}</div>
+                <div class="sess-prev">${(s.last_text || "").slice(0, 35)}</div>
+              </div>
+              ${badge}
+            `;
+
+            item.onclick = () => openSession(s.session_id);
+            sidebar.appendChild(item);
+          }
+        } catch (err) {
+          console.error("loadSidebar error:", err);
+        }
+      }
+
+      async function openSession(sessionId) {
+        selectedSession = sessionId;
+
+        try {
+          await db.markUserMessagesRead(sessionId);
+        } catch (err) {
+          console.error("mark read error:", err);
+        }
+
+        panel.innerHTML = "";
+
+        const hdr = el("div", "chat-hdr", `Anonymous #${sessionId}`);
+        const msgs = el("div", "msgs");
+        const inputRow = el("div", "admin-input");
+        const input = el("input", "msg-input");
+        input.placeholder = "Type a reply...";
+        const sendBtn = el("button", "send-btn", "➜");
+
+        inputRow.appendChild(input);
+        inputRow.appendChild(sendBtn);
+
+        panel.appendChild(hdr);
+        panel.appendChild(msgs);
+        panel.appendChild(inputRow);
+
+        async function loadThread() {
+          try {
+            const all = await db.getMessages(sessionId);
+            msgs.innerHTML = "";
+
+            for (const m of all) {
+              const ts = new Date(m.created_at).getTime();
+              msgs.appendChild(
+                m.role === "user"
+                  ? makeUserBubble(m.text, ts)
+                  : makeBotBubble(m.text, ts)
+              );
+            }
+
+            scrollBottom(msgs);
+          } catch (err) {
+            console.error("loadThread error:", err);
+            msgs.innerHTML = "";
+            msgs.appendChild(makeBotBubble("Could not load conversation."));
+          }
+        }
+
+        await loadThread();
+        await loadSidebar();
+
+        if (panelPoll) clearInterval(panelPoll);
+        panelPoll = setInterval(loadThread, 3000);
+
+        async function sendReply() {
+          const text = input.value.trim();
+          if (!text) return;
+
+          input.disabled = true;
+          sendBtn.disabled = true;
+
+          try {
+            await db.insertMessage({
+              session_id: sessionId,
+              role: "bot",
+              text,
+              read: true
+            });
+            input.value = "";
+            await loadThread();
+            await loadSidebar();
+          } catch (err) {
+            console.error("sendReply error:", err);
+          } finally {
+            input.disabled = false;
+            sendBtn.disabled = false;
+            input.focus();
+          }
+        }
+
+        sendBtn.onclick = sendReply;
+        input.addEventListener("keydown", (e) => {
+          if (e.key === "Enter") sendReply();
+        });
+      }
+
+      await loadSidebar();
+      sidebarPoll = setInterval(loadSidebar, 5000);
+
+      window.addEventListener("beforeunload", () => {
+        if (panelPoll) clearInterval(panelPoll);
+        if (sidebarPoll) clearInterval(sidebarPoll);
+      }, { once: true });
+    }
+
+    renderHome();
+  </script>
 </body>
 </html>
