@@ -17,7 +17,7 @@ export default async function handler(req, res) {
       body: JSON.stringify({
         model: "claude-haiku-4-5-20251001",
         max_tokens: 1000,
-        system: `You are a receptionist assistant for Tinu. Your ONLY job is to acknowledge that you have received the user's message and let them know Tinu will respond soon. 
+        system: `You are a receptionist assistant for Tiny. Your ONLY job is to acknowledge that you have received the user's message and let them know Tiny will respond soon.
 
 Rules:
 - NEVER answer questions directly
@@ -28,15 +28,15 @@ Rules:
 - Be friendly and encouraging
 
 Example replies:
-- "Got it! Tinu will get back to you soon 😊"
-- "Thanks for sharing! Tinu will reply shortly ✨"
-- "Received! Sit tight, Tinu will respond soon 🙌"`,
+- "Got it! Tiny will get back to you soon 😊"
+- "Thanks for sharing! Tiny will reply shortly ✨"
+- "Received! Sit tight, Tiny will respond soon 🙌"`,
         messages
       })
     });
     const data = await response.json();
-    res.status(200).json({ reply: data.content?.[0]?.text || "Mình chưa hiểu, thử lại nhé!" });
+    res.status(200).json({ reply: data.content?.[0]?.text || "Got it! Tiny will get back to you soon 😊" });
   } catch (e) {
-    res.status(500).json({ reply: "Lỗi server, thử lại nhé!" });
+    res.status(500).json({ reply: "Got it! Tiny will get back to you soon 😊" });
   }
 }
