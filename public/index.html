@@ -1,21 +1,17 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="en">
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Hỏi Tinu ẩn danh</title>
+<title>Ask Tiny Anonymously</title>
 <style>
   *{box-sizing:border-box;margin:0;padding:0}
   body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#f9fafb;height:100vh;display:flex;align-items:center;justify-content:center}
   #app{width:100%;max-width:480px;height:100vh;display:flex;flex-direction:column;background:#fff}
-
-  /* HEADER */
   .hdr{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid #f0f0f0;box-shadow:0 1px 3px #0001}
   .av{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;flex-shrink:0}
   .hdr-name{font-weight:700;font-size:16px}
   .hdr-sub{font-size:11px;color:#10b981}
-
-  /* MESSAGES */
   .msgs{flex:1;overflow-y:auto;padding:16px 14px;display:flex;flex-direction:column;gap:2px}
   .bot-row{display:flex;align-items:flex-end;gap:8px;margin-bottom:10px}
   .bot-bub{background:#f3f4f6;border-radius:18px 18px 18px 4px;padding:10px 14px;font-size:14px;max-width:300px;line-height:1.55;color:#1e1e1e;white-space:pre-wrap}
@@ -23,34 +19,24 @@
   .user-wrap{display:flex;flex-direction:column;align-items:flex-end;margin-bottom:10px}
   .ts{font-size:10px;color:#d1d5db;margin-top:3px;padding:0 4px}
   .bot-name{font-size:11px;color:#9ca3af;margin-bottom:2px;padding-left:2px}
-
-  /* TYPING */
   .typing{display:flex;gap:4px;align-items:center;padding:4px 2px}
   .dot{width:7px;height:7px;border-radius:50%;background:#9ca3af;animation:bop 1s infinite}
   .dot:nth-child(2){animation-delay:.2s}
   .dot:nth-child(3){animation-delay:.4s}
   @keyframes bop{0%,80%,100%{transform:translateY(0)}40%{transform:translateY(-5px)}}
-
-  /* INPUT */
   .input-row{display:flex;padding:10px 14px;border-top:1px solid #f0f0f0;gap:8px;background:#fff}
   .inp{flex:1;border:1.5px solid #e5e7eb;border-radius:24px;padding:10px 16px;font-size:14px;outline:none;background:#fafafa}
   .send-btn{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-
-  /* HOME */
   .home{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;padding:24px;text-align:center;gap:16px}
   .home h1{font-size:22px;font-weight:800;color:#111}
   .home p{font-size:14px;color:#6b7280;line-height:1.6}
   .big-btn{width:100%;padding:13px 0;border-radius:14px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;font-weight:700;font-size:15px;border:none;cursor:pointer}
   .sec-btn{width:100%;padding:13px 0;border-radius:14px;background:#f3f4f6;color:#374151;font-weight:700;font-size:15px;border:none;cursor:pointer}
-
-  /* LOGIN */
   .login{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;padding:24px;gap:12px}
   .login h2{font-size:20px;font-weight:800}
   .login input{width:100%;padding:12px 16px;border:1.5px solid #e5e7eb;border-radius:14px;font-size:15px;outline:none}
   .err{color:#ef4444;font-size:12px}
   .back{font-size:13px;color:#6366f1;cursor:pointer;margin-top:4px}
-
-  /* ADMIN */
   .admin{display:flex;height:100vh;overflow:hidden}
   .sidebar{width:260px;border-right:1px solid #f0f0f0;overflow-y:auto;flex-shrink:0}
   .side-top{padding:14px 16px;font-weight:700;font-size:14px;border-bottom:1px solid #f0f0f0}
@@ -66,23 +52,17 @@
   .admin-input{display:flex;padding:10px 14px;border-top:1px solid #f0f0f0;gap:8px;background:#fff;flex-shrink:0}
   .ai-btn{width:42px;height:42px;border-radius:50%;background:#10b981;border:none;cursor:pointer;font-size:18px;flex-shrink:0}
   .empty-note{padding:16px;font-size:13px;color:#aaa}
-
-  @media(max-width:500px){
-    .sidebar{width:200px}
-  }
+  @media(max-width:500px){.sidebar{width:200px}}
 </style>
 </head>
 <body>
 <div id="app"></div>
-
 <script>
-// ── CONFIG ──────────────────────────────────────────────────────────────────
 const SUPABASE_URL = "https://wnjqnqifkpivngzatkpm.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InduanFucWlma3Bpdm5nemF0a3BtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4MjE2MzYsImV4cCI6MjA4OTM5NzYzNn0.rys_oKVAhi-0k3LSN2_XGYIv4J_c7FzmIbBsGD3UStk";
-const ADMIN_PASS = "tinu2024";
-const WELCOME = "Hi, bạn muốn nhắn gì cho Tinu? 😊\n\n1️⃣ Câu hỏi\n2️⃣ Feedback\n3️⃣ Inquiry\n4️⃣ Other request";
+const ADMIN_PASS = "tiny2024";
+const WELCOME = "Hi! What would you like to send to Tiny? 😊\n\n1️⃣ Question\n2️⃣ Feedback\n3️⃣ Inquiry\n4️⃣ Other request";
 
-// ── SUPABASE HELPERS ─────────────────────────────────────────────────────────
 const db = {
   async insert(row) {
     await fetch(`${SUPABASE_URL}/rest/v1/messages`, {
@@ -120,236 +100,176 @@ const db = {
   }
 };
 
-// ── CLAUDE AI ────────────────────────────────────────────────────────────────
-async function askClaude(msgs) {
-  const messages = msgs.map(m=>({role:m.role==="user"?"user":"assistant",content:m.text}));
-  const r = await fetch("https://api.anthropic.com/v1/messages",{
+async function askAI(msgs) {
+  const r = await fetch("/api/chat", {
     method:"POST",
     headers:{"Content-Type":"application/json"},
     body:JSON.stringify({
-      model:"claude-sonnet-4-20250514",
-      max_tokens:1000,
-      system:`Bạn là Tinu – giáo viên/người hướng dẫn thân thiện. Học sinh hỏi bạn ẩn danh. Trả lời ngắn gọn, dễ hiểu, bằng tiếng Việt. Tông giọng: ấm áp, khuyến khích, không phán xét.`,
-      messages
+      messages: msgs.map(m=>({role:m.role==="user"?"user":"assistant",content:m.text}))
     })
   });
   const d = await r.json();
-  return d.content?.[0]?.text || "Mình chưa hiểu, bạn thử hỏi lại nhé! 😊";
+  return d.reply || "Sorry, something went wrong. Please try again!";
 }
 
-// ── UTILS ────────────────────────────────────────────────────────────────────
 const uid = ()=>Math.random().toString(36).slice(2,8);
 const fmt = ts=>new Date(ts).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"});
 const el = (tag,cls,html="")=>{const e=document.createElement(tag);if(cls)e.className=cls;if(html)e.innerHTML=html;return e;};
 
-// ── RENDER HELPERS ───────────────────────────────────────────────────────────
 function botBubble(text, ts=0) {
-  const row = el("div","bot-row");
-  const av = el("div","av","T");
-  const wrap = el("div","");
-  const name = el("div","bot-name","Tinu");
-  const bub = el("div","bot-bub");
-  bub.textContent = text;
-  wrap.appendChild(name); wrap.appendChild(bub);
-  if(ts>0){ const t=el("div","ts",fmt(ts)); wrap.appendChild(t); }
-  row.appendChild(av); row.appendChild(wrap);
+  const row=el("div","bot-row");
+  const av=el("div","av","T");
+  const wrap=el("div","");
+  const name=el("div","bot-name","Tiny");
+  const bub=el("div","bot-bub");
+  bub.textContent=text;
+  wrap.appendChild(name);wrap.appendChild(bub);
+  if(ts>0){const t=el("div","ts",fmt(ts));wrap.appendChild(t);}
+  row.appendChild(av);row.appendChild(wrap);
   return row;
 }
 function userBubble(text, ts) {
-  const wrap = el("div","user-wrap");
-  const bub = el("div","user-bub");
-  bub.textContent = text;
-  const t = el("div","ts",fmt(ts));
+  const wrap=el("div","user-wrap");
+  const bub=el("div","user-bub");
+  bub.textContent=text;
+  const t=el("div","ts",fmt(ts));
   t.style.textAlign="right";
-  wrap.appendChild(bub); wrap.appendChild(t);
+  wrap.appendChild(bub);wrap.appendChild(t);
   return wrap;
 }
 function typingBubble() {
-  const row = el("div","bot-row");
-  const av = el("div","av","T");
-  const bub = el("div","bot-bub");
+  const row=el("div","bot-row");
+  const av=el("div","av","T");
+  const bub=el("div","bot-bub");
   bub.innerHTML=`<div class="typing"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>`;
-  row.appendChild(av); row.appendChild(bub);
+  row.appendChild(av);row.appendChild(bub);
   return row;
 }
 
-// ── VIEWS ────────────────────────────────────────────────────────────────────
 function renderHome() {
-  const app = document.getElementById("app");
+  const app=document.getElementById("app");
   app.innerHTML="";
-  const sid = uid();
-
-  const div = el("div","home");
-  div.innerHTML=`
-    <div style="font-size:52px">🦔</div>
-    <h1>Hỏi Tinu ẩn danh</h1>
-    <p>Đặt câu hỏi mà không cần lo ai biết bạn là ai 💬<br/>AI sẽ trả lời ngay, hoặc chờ Tinu reply trực tiếp</p>
-  `;
-  const btn1 = el("button","big-btn","💬 Hỏi ẩn danh ngay");
+  const sid=uid();
+  const div=el("div","home");
+  div.innerHTML=`<div style="font-size:52px">🦔</div><h1>Ask Tiny Anonymously</h1><p>Ask anything without worrying about who sees it 💬<br/>AI confirms receipt, Tiny will reply directly</p>`;
+  const btn1=el("button","big-btn","💬 Ask anonymously");
   btn1.onclick=()=>renderChat(sid);
-
-  const qr = el("div","");
+  const qr=el("div","");
   qr.style.cssText="background:#fafafa;border-radius:14px;padding:12px 16px;width:100%;border:1px dashed #e5e7eb;text-align:center";
-  qr.innerHTML=`<div style="font-size:11px;color:#9ca3af;margin-bottom:4px">Session ID của bạn</div><div style="font-weight:700;font-size:15px;color:#4f46e5;letter-spacing:2px">#${sid}</div>`;
-
-  const btn2 = el("button","sec-btn","🔐 Tinu đăng nhập");
+  qr.innerHTML=`<div style="font-size:11px;color:#9ca3af;margin-bottom:4px">Your Session ID</div><div style="font-weight:700;font-size:15px;color:#4f46e5;letter-spacing:2px">#${sid}</div>`;
+  const btn2=el("button","sec-btn","🔐 Tiny login");
   btn2.onclick=()=>renderLogin();
-
-  div.appendChild(btn1); div.appendChild(qr); div.appendChild(btn2);
+  div.appendChild(btn1);div.appendChild(qr);div.appendChild(btn2);
   app.appendChild(div);
 }
 
 function renderLogin() {
-  const app = document.getElementById("app");
+  const app=document.getElementById("app");
   app.innerHTML="";
-  const div = el("div","login");
-  div.innerHTML=`<div style="font-size:40px">🔒</div><h2>Tinu Dashboard</h2>`;
-  const inp = el("input","");
-  inp.type="password"; inp.placeholder="Mật khẩu...";
-  const err = el("div","err","");
-  const btn = el("button","big-btn","Đăng nhập");
-  const back = el("div","back","← Quay lại");
+  const div=el("div","login");
+  div.innerHTML=`<div style="font-size:40px">🔒</div><h2>Tiny Dashboard</h2>`;
+  const inp=el("input","");
+  inp.type="password";inp.placeholder="Password...";
+  const err=el("div","err","");
+  const btn=el("button","big-btn","Login");
+  const back=el("div","back","← Back");
   back.onclick=renderHome;
-  btn.onclick=()=>{
-    if(inp.value===ADMIN_PASS) renderAdmin();
-    else { err.textContent="Sai mật khẩu!"; }
-  };
-  inp.onkeydown=e=>{ if(e.key==="Enter") btn.click(); };
-  div.appendChild(inp); div.appendChild(err); div.appendChild(btn); div.appendChild(back);
+  btn.onclick=()=>{if(inp.value===ADMIN_PASS)renderAdmin();else err.textContent="Wrong password!";};
+  inp.onkeydown=e=>{if(e.key==="Enter")btn.click();};
+  div.appendChild(inp);div.appendChild(err);div.appendChild(btn);div.appendChild(back);
   app.appendChild(div);
 }
 
 async function renderChat(sessionId) {
-  const app = document.getElementById("app");
+  const app=document.getElementById("app");
   app.innerHTML="";
-
-  const page = el("div",""); page.id="chat-page";
+  const page=el("div","");
   page.style.cssText="display:flex;flex-direction:column;height:100vh";
-
-  // header
-  const hdr = el("div","hdr");
-  hdr.innerHTML=`<div class="av">T</div><div><div class="hdr-name">Tinu 🦔</div><div class="hdr-sub">Ẩn danh & bảo mật</div></div>`;
+  const hdr=el("div","hdr");
+  hdr.innerHTML=`<div class="av">T</div><div><div class="hdr-name">Tiny 🦔</div><div class="hdr-sub">Anonymous & secure</div></div>`;
   page.appendChild(hdr);
-
-  // msgs
-  const msgs = el("div","msgs"); page.appendChild(msgs);
-
-  // input
-  const row = el("div","input-row");
-  const inp = el("input","inp"); inp.placeholder="Nhập tin nhắn...";
-  const btn = el("button","send-btn");
+  const msgs=el("div","msgs");
+  page.appendChild(msgs);
+  const row=el("div","input-row");
+  const inp=el("input","inp");inp.placeholder="Type a message...";
+  const btn=el("button","send-btn");
   btn.innerHTML=`<svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg>`;
-  row.appendChild(inp); row.appendChild(btn);
+  row.appendChild(inp);row.appendChild(btn);
   page.appendChild(row);
   app.appendChild(page);
-
-  // welcome
   msgs.appendChild(botBubble(WELCOME));
   msgs.scrollTop=msgs.scrollHeight;
-
-  // load existing messages
-  const existing = await db.getMessages(sessionId);
+  const existing=await db.getMessages(sessionId);
   existing.forEach(m=>{
-    if(m.role==="user") msgs.appendChild(userBubble(m.text, new Date(m.created_at).getTime()));
-    else msgs.appendChild(botBubble(m.text, new Date(m.created_at).getTime()));
+    if(m.role==="user")msgs.appendChild(userBubble(m.text,new Date(m.created_at).getTime()));
+    else msgs.appendChild(botBubble(m.text,new Date(m.created_at).getTime()));
   });
   msgs.scrollTop=msgs.scrollHeight;
-
-  // poll for new bot replies
-  let lastCount = existing.length;
-  const poll = setInterval(async()=>{
-    const all = await db.getMessages(sessionId);
+  let lastCount=existing.length;
+  const poll=setInterval(async()=>{
+    const all=await db.getMessages(sessionId);
     if(all.length>lastCount){
       for(let i=lastCount;i<all.length;i++){
         const m=all[i];
-        if(m.role==="bot") msgs.appendChild(botBubble(m.text, new Date(m.created_at).getTime()));
+        if(m.role==="bot")msgs.appendChild(botBubble(m.text,new Date(m.created_at).getTime()));
       }
       lastCount=all.length;
       msgs.scrollTop=msgs.scrollHeight;
     }
   },3000);
-
-  // send
   let sending=false;
-  const send = async()=>{
+  const send=async()=>{
     const txt=inp.value.trim();
-    if(!txt||sending) return;
-    sending=true; inp.value="";
+    if(!txt||sending)return;
+    sending=true;inp.value="";
     msgs.appendChild(userBubble(txt,Date.now()));
     msgs.scrollTop=msgs.scrollHeight;
-
     await db.insert({session_id:sessionId,role:"user",text:txt});
-
-    // AI auto-reply
-    const typing=typingBubble(); msgs.appendChild(typing); msgs.scrollTop=msgs.scrollHeight;
-    try {
-      const allMsgs = await db.getMessages(sessionId);
-      const reply = await askClaude(allMsgs);
+    const typing=typingBubble();msgs.appendChild(typing);msgs.scrollTop=msgs.scrollHeight;
+    try{
+      const allMsgs=await db.getMessages(sessionId);
+      const reply=await askAI(allMsgs);
       await db.insert({session_id:sessionId,role:"bot",text:reply});
       msgs.removeChild(typing);
       msgs.appendChild(botBubble(reply,Date.now()));
-    } catch {
+    }catch{
       msgs.removeChild(typing);
-      msgs.appendChild(botBubble("Mình gặp lỗi rồi, thử lại nhé 😅",Date.now()));
+      msgs.appendChild(botBubble("Something went wrong, please try again! 😅",Date.now()));
     }
     msgs.scrollTop=msgs.scrollHeight;
-    lastCount = (await db.getMessages(sessionId)).length;
+    lastCount=(await db.getMessages(sessionId)).length;
     sending=false;
   };
-
   btn.onclick=send;
-  inp.onkeydown=e=>{ if(e.key==="Enter") send(); };
-
-  page.addEventListener("remove",()=>clearInterval(poll));
+  inp.onkeydown=e=>{if(e.key==="Enter")send();};
 }
 
 async function renderAdmin() {
-  const app = document.getElementById("app");
+  const app=document.getElementById("app");
   app.innerHTML="";
-
-  const wrap = el("div","admin");
-
-  // sidebar
-  const sidebar = el("div","sidebar");
-  const sideTop = el("div","side-top","📥 Câu hỏi");
+  const wrap=el("div","admin");
+  const sidebar=el("div","sidebar");
+  const sideTop=el("div","side-top","📥 Questions");
   sidebar.appendChild(sideTop);
-
-  // chat panel
-  const panel = el("div","chat-panel");
-  const nonesel = el("div","none-sel","👈 Chọn cuộc trò chuyện");
+  const panel=el("div","chat-panel");
+  const nonesel=el("div","none-sel","👈 Select a conversation");
   panel.appendChild(nonesel);
-
-  wrap.appendChild(sidebar); wrap.appendChild(panel);
+  wrap.appendChild(sidebar);wrap.appendChild(panel);
   app.appendChild(wrap);
-
   let selSession=null;
   let pollInterval=null;
 
   async function loadSidebar() {
-    const ids = await db.getSessions();
-    // remove old items
-    while(sidebar.children.length>1) sidebar.removeChild(sidebar.lastChild);
-
-    if(ids.length===0){
-      sidebar.appendChild(el("div","empty-note","Chưa có ai nhắn"));
-      return;
-    }
-
+    const ids=await db.getSessions();
+    while(sidebar.children.length>1)sidebar.removeChild(sidebar.lastChild);
+    if(ids.length===0){sidebar.appendChild(el("div","empty-note","No messages yet"));return;}
     for(const id of ids){
-      const u = await db.getUnread(id);
-      const msgs = await db.getMessages(id);
-      const last = msgs.slice(-1)[0];
-
-      const item = el("div","sess-item");
-      if(id===selSession) item.classList.add("active");
-      item.innerHTML=`
-        <div class="av" style="width:34px;height:34px;font-size:13px">?</div>
-        <div style="flex:1;overflow:hidden">
-          <div class="sess-id">Ẩn danh #${id}</div>
-          <div class="sess-prev">${last?.text?.slice(0,28)||""}…</div>
-        </div>
-        ${u>0?`<div class="badge">${u}</div>`:""}
-      `;
+      const u=await db.getUnread(id);
+      const msgs=await db.getMessages(id);
+      const last=msgs.slice(-1)[0];
+      const item=el("div","sess-item");
+      if(id===selSession)item.classList.add("active");
+      item.innerHTML=`<div class="av" style="width:34px;height:34px;font-size:13px">?</div><div style="flex:1;overflow:hidden"><div class="sess-id">Anonymous #${id}</div><div class="sess-prev">${last?.text?.slice(0,28)||""}…</div></div>${u>0?`<div class="badge">${u}</div>`:""}`;
       item.onclick=()=>openSession(id);
       sidebar.appendChild(item);
     }
@@ -358,67 +278,56 @@ async function renderAdmin() {
   async function openSession(id) {
     selSession=id;
     await db.markRead(id);
-
     panel.innerHTML="";
-    const hdr=el("div","chat-hdr",`Ẩn danh #${id}`);
+    const hdr=el("div","chat-hdr",`Anonymous #${id}`);
     const msgs=el("div","msgs");
     const inputRow=el("div","admin-input");
-    const inp=el("input","inp"); inp.placeholder="Trả lời...";
+    const inp=el("input","inp");inp.placeholder="Type a reply...";
     const sendBtn=el("button","send-btn");
     sendBtn.innerHTML=`<svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg>`;
     const aiBtn=el("button","ai-btn","🤖");
-    aiBtn.title="Để AI trả lời";
-    inputRow.appendChild(inp); inputRow.appendChild(sendBtn); inputRow.appendChild(aiBtn);
-    panel.appendChild(hdr); panel.appendChild(msgs); panel.appendChild(inputRow);
-
-    // load messages
+    aiBtn.title="Let AI reply";
+    inputRow.appendChild(inp);inputRow.appendChild(sendBtn);inputRow.appendChild(aiBtn);
+    panel.appendChild(hdr);panel.appendChild(msgs);panel.appendChild(inputRow);
     const loadMsgs=async()=>{
       const all=await db.getMessages(id);
       msgs.innerHTML="";
       all.forEach(m=>{
-        if(m.role==="user") msgs.appendChild(userBubble(m.text,new Date(m.created_at).getTime()));
+        if(m.role==="user")msgs.appendChild(userBubble(m.text,new Date(m.created_at).getTime()));
         else msgs.appendChild(botBubble(m.text,new Date(m.created_at).getTime()));
       });
       msgs.scrollTop=msgs.scrollHeight;
       return all;
     };
     let all=await loadMsgs();
-
-    // poll
-    if(pollInterval) clearInterval(pollInterval);
-    pollInterval=setInterval(async()=>{ all=await loadMsgs(); },4000);
-
-    // send reply
+    if(pollInterval)clearInterval(pollInterval);
+    pollInterval=setInterval(async()=>{all=await loadMsgs();},4000);
     const sendReply=async(useAI=false)=>{
       if(useAI){
-        const typing=typingBubble(); msgs.appendChild(typing); msgs.scrollTop=msgs.scrollHeight;
+        const typing=typingBubble();msgs.appendChild(typing);msgs.scrollTop=msgs.scrollHeight;
         try{
-          const reply=await askClaude(all);
+          const reply=await askAI(all);
           await db.insert({session_id:id,role:"bot",text:reply});
           msgs.removeChild(typing);
           all=await loadMsgs();
-        }catch{ msgs.removeChild(typing); }
-      } else {
-        const txt=inp.value.trim(); if(!txt) return;
+        }catch{msgs.removeChild(typing);}
+      }else{
+        const txt=inp.value.trim();if(!txt)return;
         await db.insert({session_id:id,role:"bot",text:txt});
         inp.value="";
         all=await loadMsgs();
       }
       loadSidebar();
     };
-
     sendBtn.onclick=()=>sendReply(false);
     aiBtn.onclick=()=>sendReply(true);
-    inp.onkeydown=e=>{ if(e.key==="Enter") sendReply(false); };
+    inp.onkeydown=e=>{if(e.key==="Enter")sendReply(false);};
     loadSidebar();
   }
-
-  // auto-refresh sidebar
   loadSidebar();
   setInterval(loadSidebar,5000);
 }
 
-// ── START ────────────────────────────────────────────────────────────────────
 renderHome();
 </script>
 </body>
