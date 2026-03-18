@@ -15,7 +15,7 @@
   .msgs{flex:1;overflow-y:auto;padding:16px 14px;display:flex;flex-direction:column;gap:2px}
   .bot-row{display:flex;align-items:flex-end;gap:8px;margin-bottom:10px}
   .bot-bub{background:#f3f4f6;border-radius:18px 18px 18px 4px;padding:10px 14px;font-size:14px;max-width:300px;line-height:1.55;color:#1e1e1e;white-space:pre-wrap}
-  .user-bub{background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:18px 18px 4px 18px;padding:10px 14px;font-size:14px;max-width:300px;color:#fff;line-height:1.55;align-self:flex-end}
+  .user-bub{background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:18px 18px 4px 18px;padding:10px 14px;font-size:14px;max-width:300px;color:#fff;line-height:1.55}
   .user-wrap{display:flex;flex-direction:column;align-items:flex-end;margin-bottom:10px}
   .ts{font-size:10px;color:#d1d5db;margin-top:3px;padding:0 4px}
   .bot-name{font-size:11px;color:#9ca3af;margin-bottom:2px;padding-left:2px}
@@ -50,7 +50,6 @@
   .chat-hdr{padding:14px 18px;font-weight:700;font-size:15px;border-bottom:1px solid #f0f0f0;flex-shrink:0}
   .none-sel{flex:1;display:flex;align-items:center;justify-content:center;color:#9ca3af;font-size:14px}
   .admin-input{display:flex;padding:10px 14px;border-top:1px solid #f0f0f0;gap:8px;background:#fff;flex-shrink:0}
-  .ai-btn{width:42px;height:42px;border-radius:50%;background:#10b981;border:none;cursor:pointer;font-size:18px;flex-shrink:0}
   .empty-note{padding:16px;font-size:13px;color:#aaa}
   @media(max-width:500px){.sidebar{width:200px}}
 </style>
@@ -60,272 +59,207 @@
 <script>
 const SUPABASE_URL = "https://wnjqnqifkpivngzatkpm.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InduanFucWlma3Bpdm5nemF0a3BtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4MjE2MzYsImV4cCI6MjA4OTM5NzYzNn0.rys_oKVAhi-0k3LSN2_XGYIv4J_c7FzmIbBsGD3UStk";
+const CLAUDE_KEY = "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";
 const ADMIN_PASS = "tiny2024";
 const WELCOME = "Hi! What would you like to send to Tiny? 😊\n\n1️⃣ Question\n2️⃣ Feedback\n3️⃣ Inquiry\n4️⃣ Other request";
 
+// ── SUPABASE ─────────────────────────────────────────────────────────────────
+const h = {"apikey":SUPABASE_KEY,"Authorization":`Bearer ${SUPABASE_KEY}`,"Content-Type":"application/json"};
 const db = {
-  async insert(row) {
-    await fetch(`${SUPABASE_URL}/rest/v1/messages`, {
-      method:"POST",
-      headers:{"Content-Type":"application/json","apikey":SUPABASE_KEY,"Authorization":`Bearer ${SUPABASE_KEY}`},
-      body:JSON.stringify(row)
-    });
+  async insert(row){await fetch(`${SUPABASE_URL}/rest/v1/messages`,{method:"POST",headers:h,body:JSON.stringify(row)});},
+  async getSessions(){
+    const r=await fetch(`${SUPABASE_URL}/rest/v1/messages?select=session_id&order=created_at.asc`,{headers:h});
+    const d=await r.json(); return [...new Set(d.map(x=>x.session_id))];
   },
-  async getSessions() {
-    const r = await fetch(`${SUPABASE_URL}/rest/v1/messages?select=session_id&order=created_at.asc`, {
-      headers:{"apikey":SUPABASE_KEY,"Authorization":`Bearer ${SUPABASE_KEY}`}
-    });
-    const data = await r.json();
-    return [...new Set(data.map(d=>d.session_id))];
-  },
-  async getMessages(sessionId) {
-    const r = await fetch(`${SUPABASE_URL}/rest/v1/messages?session_id=eq.${sessionId}&order=created_at.asc`, {
-      headers:{"apikey":SUPABASE_KEY,"Authorization":`Bearer ${SUPABASE_KEY}`}
-    });
+  async getMsgs(sid){
+    const r=await fetch(`${SUPABASE_URL}/rest/v1/messages?session_id=eq.${sid}&order=created_at.asc`,{headers:h});
     return r.json();
   },
-  async markRead(sessionId) {
-    await fetch(`${SUPABASE_URL}/rest/v1/messages?session_id=eq.${sessionId}&role=eq.user&read=eq.false`, {
-      method:"PATCH",
-      headers:{"Content-Type":"application/json","apikey":SUPABASE_KEY,"Authorization":`Bearer ${SUPABASE_KEY}`},
-      body:JSON.stringify({read:true})
-    });
+  async markRead(sid){
+    await fetch(`${SUPABASE_URL}/rest/v1/messages?session_id=eq.${sid}&role=eq.user&read=eq.false`,{method:"PATCH",headers:h,body:JSON.stringify({read:true})});
   },
-  async getUnread(sessionId) {
-    const r = await fetch(`${SUPABASE_URL}/rest/v1/messages?session_id=eq.${sessionId}&role=eq.user&read=eq.false&select=id`, {
-      headers:{"apikey":SUPABASE_KEY,"Authorization":`Bearer ${SUPABASE_KEY}`}
-    });
-    const d = await r.json();
-    return d.length;
+  async unread(sid){
+    const r=await fetch(`${SUPABASE_URL}/rest/v1/messages?session_id=eq.${sid}&role=eq.user&read=eq.false&select=id`,{headers:h});
+    const d=await r.json(); return d.length;
   }
 };
 
+// ── CLAUDE via Supabase Edge Function ────────────────────────────────────────
 async function askAI(msgs) {
-  const r = await fetch("/api/chat", {
+  const r = await fetch(`${SUPABASE_URL}/functions/v1/chat`, {
     method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({
-      messages: msgs.map(m=>({role:m.role==="user"?"user":"assistant",content:m.text}))
-    })
+    headers:{"Content-Type":"application/json","Authorization":`Bearer ${SUPABASE_KEY}`},
+    body:JSON.stringify({messages: msgs.map(m=>({role:m.role==="user"?"user":"assistant",content:m.text}))})
   });
   const d = await r.json();
-  return d.reply || "Sorry, something went wrong. Please try again!";
+  return d.reply || "Got it! Tiny will get back to you soon 😊";
 }
 
-const uid = ()=>Math.random().toString(36).slice(2,8);
-const fmt = ts=>new Date(ts).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"});
-const el = (tag,cls,html="")=>{const e=document.createElement(tag);if(cls)e.className=cls;if(html)e.innerHTML=html;return e;};
+// ── UTILS ─────────────────────────────────────────────────────────────────────
+const uid=()=>Math.random().toString(36).slice(2,8);
+const fmt=ts=>new Date(ts).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"});
+const el=(tag,cls,html)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(html)e.innerHTML=html;return e;};
 
-function botBubble(text, ts=0) {
-  const row=el("div","bot-row");
-  const av=el("div","av","T");
-  const wrap=el("div","");
-  const name=el("div","bot-name","Tiny");
-  const bub=el("div","bot-bub");
-  bub.textContent=text;
-  wrap.appendChild(name);wrap.appendChild(bub);
+function botBubble(text,ts=0){
+  const row=el("div","bot-row"),av=el("div","av","T"),wrap=el("div"),name=el("div","bot-name","Tiny"),bub=el("div","bot-bub");
+  bub.textContent=text; wrap.appendChild(name); wrap.appendChild(bub);
   if(ts>0){const t=el("div","ts",fmt(ts));wrap.appendChild(t);}
-  row.appendChild(av);row.appendChild(wrap);
-  return row;
+  row.appendChild(av);row.appendChild(wrap);return row;
 }
-function userBubble(text, ts) {
-  const wrap=el("div","user-wrap");
-  const bub=el("div","user-bub");
-  bub.textContent=text;
-  const t=el("div","ts",fmt(ts));
-  t.style.textAlign="right";
-  wrap.appendChild(bub);wrap.appendChild(t);
-  return wrap;
+function userBubble(text,ts){
+  const wrap=el("div","user-wrap"),bub=el("div","user-bub"),t=el("div","ts",fmt(ts));
+  bub.textContent=text;t.style.textAlign="right";
+  wrap.appendChild(bub);wrap.appendChild(t);return wrap;
 }
-function typingBubble() {
-  const row=el("div","bot-row");
-  const av=el("div","av","T");
-  const bub=el("div","bot-bub");
+function typingBubble(){
+  const row=el("div","bot-row"),av=el("div","av","T"),bub=el("div","bot-bub");
   bub.innerHTML=`<div class="typing"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>`;
-  row.appendChild(av);row.appendChild(bub);
-  return row;
+  row.appendChild(av);row.appendChild(bub);return row;
 }
 
-function renderHome() {
-  const app=document.getElementById("app");
-  app.innerHTML="";
+// ── HOME ──────────────────────────────────────────────────────────────────────
+function renderHome(){
+  const app=document.getElementById("app");app.innerHTML="";
   const sid=uid();
   const div=el("div","home");
   div.innerHTML=`<div style="font-size:52px">🦔</div><h1>Ask Tiny Anonymously</h1><p>Ask anything without worrying about who sees it 💬<br/>AI confirms receipt, Tiny will reply directly</p>`;
-  const btn1=el("button","big-btn","💬 Ask anonymously");
-  btn1.onclick=()=>renderChat(sid);
-  const qr=el("div","");
-  qr.style.cssText="background:#fafafa;border-radius:14px;padding:12px 16px;width:100%;border:1px dashed #e5e7eb;text-align:center";
+  const b1=el("button","big-btn","💬 Ask anonymously");b1.onclick=()=>renderChat(sid);
+  const qr=el("div");qr.style.cssText="background:#fafafa;border-radius:14px;padding:12px 16px;width:100%;border:1px dashed #e5e7eb;text-align:center";
   qr.innerHTML=`<div style="font-size:11px;color:#9ca3af;margin-bottom:4px">Your Session ID</div><div style="font-weight:700;font-size:15px;color:#4f46e5;letter-spacing:2px">#${sid}</div>`;
-  const btn2=el("button","sec-btn","🔐 Tiny login");
-  btn2.onclick=()=>renderLogin();
-  div.appendChild(btn1);div.appendChild(qr);div.appendChild(btn2);
-  app.appendChild(div);
+  const b2=el("button","sec-btn","🔐 Tiny login");b2.onclick=renderLogin;
+  div.appendChild(b1);div.appendChild(qr);div.appendChild(b2);app.appendChild(div);
 }
 
-function renderLogin() {
-  const app=document.getElementById("app");
-  app.innerHTML="";
+// ── LOGIN ─────────────────────────────────────────────────────────────────────
+function renderLogin(){
+  const app=document.getElementById("app");app.innerHTML="";
   const div=el("div","login");
   div.innerHTML=`<div style="font-size:40px">🔒</div><h2>Tiny Dashboard</h2>`;
-  const inp=el("input","");
-  inp.type="password";inp.placeholder="Password...";
-  const err=el("div","err","");
+  const inp=el("input");inp.type="password";inp.placeholder="Password...";
+  const err=el("div","err");
   const btn=el("button","big-btn","Login");
-  const back=el("div","back","← Back");
-  back.onclick=renderHome;
+  const back=el("div","back","← Back");back.onclick=renderHome;
   btn.onclick=()=>{if(inp.value===ADMIN_PASS)renderAdmin();else err.textContent="Wrong password!";};
   inp.onkeydown=e=>{if(e.key==="Enter")btn.click();};
-  div.appendChild(inp);div.appendChild(err);div.appendChild(btn);div.appendChild(back);
-  app.appendChild(div);
+  div.appendChild(inp);div.appendChild(err);div.appendChild(btn);div.appendChild(back);app.appendChild(div);
 }
 
-async function renderChat(sessionId) {
-  const app=document.getElementById("app");
-  app.innerHTML="";
-  const page=el("div","");
-  page.style.cssText="display:flex;flex-direction:column;height:100vh";
-  const hdr=el("div","hdr");
-  hdr.innerHTML=`<div class="av">T</div><div><div class="hdr-name">Tiny 🦔</div><div class="hdr-sub">Anonymous & secure</div></div>`;
-  page.appendChild(hdr);
+// ── USER CHAT ─────────────────────────────────────────────────────────────────
+async function renderChat(sid){
+  const app=document.getElementById("app");app.innerHTML="";
+  const page=el("div");page.style.cssText="display:flex;flex-direction:column;height:100vh";
+  const hdr=el("div","hdr");hdr.innerHTML=`<div class="av">T</div><div><div class="hdr-name">Tiny 🦔</div><div class="hdr-sub">Anonymous & secure</div></div>`;
   const msgs=el("div","msgs");
-  page.appendChild(msgs);
   const row=el("div","input-row");
   const inp=el("input","inp");inp.placeholder="Type a message...";
-  const btn=el("button","send-btn");
-  btn.innerHTML=`<svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg>`;
+  const btn=el("button","send-btn");btn.innerHTML=`<svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg>`;
   row.appendChild(inp);row.appendChild(btn);
-  page.appendChild(row);
-  app.appendChild(page);
+  page.appendChild(hdr);page.appendChild(msgs);page.appendChild(row);app.appendChild(page);
+
   msgs.appendChild(botBubble(WELCOME));
-  msgs.scrollTop=msgs.scrollHeight;
-  const existing=await db.getMessages(sessionId);
+  const existing=await db.getMsgs(sid);
   existing.forEach(m=>{
     if(m.role==="user")msgs.appendChild(userBubble(m.text,new Date(m.created_at).getTime()));
     else msgs.appendChild(botBubble(m.text,new Date(m.created_at).getTime()));
   });
   msgs.scrollTop=msgs.scrollHeight;
+
   let lastCount=existing.length;
-  const poll=setInterval(async()=>{
-    const all=await db.getMessages(sessionId);
+  setInterval(async()=>{
+    const all=await db.getMsgs(sid);
     if(all.length>lastCount){
       for(let i=lastCount;i<all.length;i++){
         const m=all[i];
         if(m.role==="bot")msgs.appendChild(botBubble(m.text,new Date(m.created_at).getTime()));
       }
-      lastCount=all.length;
-      msgs.scrollTop=msgs.scrollHeight;
+      lastCount=all.length;msgs.scrollTop=msgs.scrollHeight;
     }
   },3000);
-  let sending=false;
+
+  let busy=false;
   const send=async()=>{
-    const txt=inp.value.trim();
-    if(!txt||sending)return;
-    sending=true;inp.value="";
-    msgs.appendChild(userBubble(txt,Date.now()));
-    msgs.scrollTop=msgs.scrollHeight;
-    await db.insert({session_id:sessionId,role:"user",text:txt});
+    const txt=inp.value.trim();if(!txt||busy)return;
+    busy=true;inp.value="";
+    msgs.appendChild(userBubble(txt,Date.now()));msgs.scrollTop=msgs.scrollHeight;
+    await db.insert({session_id:sid,role:"user",text:txt});
     const typing=typingBubble();msgs.appendChild(typing);msgs.scrollTop=msgs.scrollHeight;
     try{
-      const allMsgs=await db.getMessages(sessionId);
-      const reply=await askAI(allMsgs);
-      await db.insert({session_id:sessionId,role:"bot",text:reply});
+      const all=await db.getMsgs(sid);
+      const reply=await askAI(all);
+      await db.insert({session_id:sid,role:"bot",text:reply});
       msgs.removeChild(typing);
       msgs.appendChild(botBubble(reply,Date.now()));
     }catch{
       msgs.removeChild(typing);
-      msgs.appendChild(botBubble("Something went wrong, please try again! 😅",Date.now()));
+      msgs.appendChild(botBubble("Got it! Tiny will get back to you soon 😊",Date.now()));
     }
     msgs.scrollTop=msgs.scrollHeight;
-    lastCount=(await db.getMessages(sessionId)).length;
-    sending=false;
+    lastCount=(await db.getMsgs(sid)).length;
+    busy=false;
   };
-  btn.onclick=send;
-  inp.onkeydown=e=>{if(e.key==="Enter")send();};
+  btn.onclick=send;inp.onkeydown=e=>{if(e.key==="Enter")send();};
 }
 
-async function renderAdmin() {
-  const app=document.getElementById("app");
-  app.innerHTML="";
+// ── ADMIN ─────────────────────────────────────────────────────────────────────
+async function renderAdmin(){
+  const app=document.getElementById("app");app.innerHTML="";
   const wrap=el("div","admin");
   const sidebar=el("div","sidebar");
-  const sideTop=el("div","side-top","📥 Questions");
-  sidebar.appendChild(sideTop);
+  sidebar.appendChild(el("div","side-top","📥 Questions"));
   const panel=el("div","chat-panel");
-  const nonesel=el("div","none-sel","👈 Select a conversation");
-  panel.appendChild(nonesel);
-  wrap.appendChild(sidebar);wrap.appendChild(panel);
-  app.appendChild(wrap);
-  let selSession=null;
-  let pollInterval=null;
+  panel.appendChild(el("div","none-sel","👈 Select a conversation"));
+  wrap.appendChild(sidebar);wrap.appendChild(panel);app.appendChild(wrap);
 
-  async function loadSidebar() {
+  let sel=null,pollTimer=null;
+
+  async function loadSidebar(){
     const ids=await db.getSessions();
     while(sidebar.children.length>1)sidebar.removeChild(sidebar.lastChild);
-    if(ids.length===0){sidebar.appendChild(el("div","empty-note","No messages yet"));return;}
+    if(!ids.length){sidebar.appendChild(el("div","empty-note","No messages yet"));return;}
     for(const id of ids){
-      const u=await db.getUnread(id);
-      const msgs=await db.getMessages(id);
-      const last=msgs.slice(-1)[0];
+      const u=await db.unread(id);
+      const ms=await db.getMsgs(id);
+      const last=ms.slice(-1)[0];
       const item=el("div","sess-item");
-      if(id===selSession)item.classList.add("active");
-      item.innerHTML=`<div class="av" style="width:34px;height:34px;font-size:13px">?</div><div style="flex:1;overflow:hidden"><div class="sess-id">Anonymous #${id}</div><div class="sess-prev">${last?.text?.slice(0,28)||""}…</div></div>${u>0?`<div class="badge">${u}</div>`:""}`;
+      if(id===sel)item.classList.add("active");
+      item.innerHTML=`<div class="av" style="width:34px;height:34px;font-size:13px">?</div><div style="flex:1;overflow:hidden"><div class="sess-id">Anonymous #${id}</div><div class="sess-prev">${(last?.text||"").slice(0,28)}…</div></div>${u>0?`<div class="badge">${u}</div>`:""}`;
       item.onclick=()=>openSession(id);
       sidebar.appendChild(item);
     }
   }
 
-  async function openSession(id) {
-    selSession=id;
-    await db.markRead(id);
+  async function openSession(id){
+    sel=id;await db.markRead(id);
     panel.innerHTML="";
     const hdr=el("div","chat-hdr",`Anonymous #${id}`);
     const msgs=el("div","msgs");
-    const inputRow=el("div","admin-input");
+    const irow=el("div","admin-input");
     const inp=el("input","inp");inp.placeholder="Type a reply...";
-    const sendBtn=el("button","send-btn");
-    sendBtn.innerHTML=`<svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg>`;
-    const aiBtn=el("button","ai-btn","🤖");
-    aiBtn.title="Let AI reply";
-    inputRow.appendChild(inp);inputRow.appendChild(sendBtn);inputRow.appendChild(aiBtn);
-    panel.appendChild(hdr);panel.appendChild(msgs);panel.appendChild(inputRow);
+    const sbtn=el("button","send-btn");sbtn.innerHTML=`<svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg>`;
+    irow.appendChild(inp);irow.appendChild(sbtn);
+    panel.appendChild(hdr);panel.appendChild(msgs);panel.appendChild(irow);
+
     const loadMsgs=async()=>{
-      const all=await db.getMessages(id);
-      msgs.innerHTML="";
+      const all=await db.getMsgs(id);msgs.innerHTML="";
       all.forEach(m=>{
         if(m.role==="user")msgs.appendChild(userBubble(m.text,new Date(m.created_at).getTime()));
         else msgs.appendChild(botBubble(m.text,new Date(m.created_at).getTime()));
       });
-      msgs.scrollTop=msgs.scrollHeight;
-      return all;
+      msgs.scrollTop=msgs.scrollHeight;return all;
     };
     let all=await loadMsgs();
-    if(pollInterval)clearInterval(pollInterval);
-    pollInterval=setInterval(async()=>{all=await loadMsgs();},4000);
-    const sendReply=async(useAI=false)=>{
-      if(useAI){
-        const typing=typingBubble();msgs.appendChild(typing);msgs.scrollTop=msgs.scrollHeight;
-        try{
-          const reply=await askAI(all);
-          await db.insert({session_id:id,role:"bot",text:reply});
-          msgs.removeChild(typing);
-          all=await loadMsgs();
-        }catch{msgs.removeChild(typing);}
-      }else{
-        const txt=inp.value.trim();if(!txt)return;
-        await db.insert({session_id:id,role:"bot",text:txt});
-        inp.value="";
-        all=await loadMsgs();
-      }
-      loadSidebar();
+    if(pollTimer)clearInterval(pollTimer);
+    pollTimer=setInterval(async()=>{all=await loadMsgs();},4000);
+
+    const sendReply=async()=>{
+      const txt=inp.value.trim();if(!txt)return;
+      await db.insert({session_id:id,role:"bot",text:txt});
+      inp.value="";all=await loadMsgs();loadSidebar();
     };
-    sendBtn.onclick=()=>sendReply(false);
-    aiBtn.onclick=()=>sendReply(true);
-    inp.onkeydown=e=>{if(e.key==="Enter")sendReply(false);};
+    sbtn.onclick=sendReply;inp.onkeydown=e=>{if(e.key==="Enter")sendReply();};
     loadSidebar();
   }
-  loadSidebar();
-  setInterval(loadSidebar,5000);
+  loadSidebar();setInterval(loadSidebar,5000);
 }
 
 renderHome();
