@@ -290,16 +290,49 @@
     }
 
     @media (max-width: 640px) {
-      .admin {
-        flex-direction: column;
-      }
-      .sidebar {
-        width: 100%;
-        height: 220px;
-        border-right: none;
-        border-bottom: 1px solid #f3f4f6;
-      }
-    }
+  body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 12px;
+  }
+
+  #app {
+    width: 80%;
+    min-height: 75vh;
+    max-height: 75vh;
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: 0 8px 24px rgba(0,0,0,.08);
+  }
+
+  .home,
+  .login {
+    min-height: 75vh;
+    padding: 18px;
+  }
+
+  .admin {
+    flex-direction: column;
+    height: 75vh;
+  }
+
+  .sidebar {
+    width: 100%;
+    height: 180px;
+    border-right: none;
+    border-bottom: 1px solid #f3f4f6;
+  }
+
+  .msgs {
+    padding: 12px 10px;
+  }
+
+  .input-row,
+  .admin-input {
+    padding: 8px 10px;
+  }
+}
   </style>
 </head>
 <body>
