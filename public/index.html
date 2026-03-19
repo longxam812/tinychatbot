@@ -934,14 +934,46 @@
     const BOT_HEADER = BOT_NAME;
     const BOT_CHAT_LABEL = "Chat";
     const AI_ALIAS = Math.random() < 0.5 ? "Linh Junior" : "Mini Linh";
-    const STUDENT_WELCOME = `Hi! What would you like to send to ${BOT_NAME}? 😊\n\n1️⃣ Question\n2️⃣ Feedback\n3️⃣ Inquiry\n4️⃣ Other request`;
+    const STUDENT_WELCOME = `Hi! What would you like to send to ${BOT_NAME}? 😊
+
+1️⃣ Question
+2️⃣ Feedback
+3️⃣ Inquiry
+4️⃣ Other request`;
     const CATEGORY_LABELS = { "1": "question", "2": "feedback", "3": "inquiry", "4": "other request" };
-    const CATEGORY_REPLIES = {
-      "1": `Got it 😊 What question would you like ${BOT_NAME} to help with?`,
-      "2": `Thanks 💛 What feedback would you like ${BOT_NAME} to see?`,
-      "3": `Sure 🌿 What would you like to ask ${BOT_NAME} about?`,
-      "4": `Okeee ✨ What would you like to send to ${BOT_NAME}?`
-    };
+    const POSITIVE_ICONS = ["😄", "🌿", "💌", "🎉", "✨"];
+
+    function pickPositiveIcon(seed = "") {
+      const value = String(seed || "");
+      let total = 0;
+      for (let i = 0; i < value.length; i++) total += value.charCodeAt(i);
+      return POSITIVE_ICONS[total % POSITIVE_ICONS.length] || "😄";
+    }
+
+    function makeStudentFollowUp(category, seed = "") {
+      const icon = pickPositiveIcon(`${category}|${seed}`);
+      if (category === "1") return `What question do you want to ask? ${icon}`;
+      if (category === "2") return `What thought do you want to share? ${icon}`;
+      if (category === "3") return `What do you want to ask about? ${icon}`;
+      return `What do you want to send? ${icon}`;
+    }
+
+    function makeStudentRelayAck(seed = "") {
+      const icon = pickPositiveIcon(seed);
+      return `I'll let her know ${icon} no eye contact established`;
+    }
+
+    function sanitizeStudentReply(text, fallbackSeed = "") {
+      const raw = String(text || "").trim();
+      if (!raw) return makeStudentRelayAck(fallbackSeed);
+      const cleaned = raw
+        .replace(/Tiny/g, BOT_NAME)
+        .replace(/\s*[—–-]\s*/g, " ")
+        .replace(/\s{2,}/g, " ")
+        .trim();
+      if (!cleaned) return makeStudentRelayAck(fallbackSeed);
+      return cleaned;
+    }
 
     const defaultHeaders = {
       apikey: SUPABASE_ANON_KEY,
@@ -955,9 +987,9 @@
       revealOriginal: false,
       threadCacheSig: "",
       sessionsSnapshotSig: "",
-      pinned: loadJSON("linh_pinned_sessions", {}),
-      trash: loadJSON("linh_trashed_sessions", {}),
-      reviewed: loadJSON("linh_reviewed_sessions", {}),
+      pinned: {},
+      trash: {},
+      reviewed: {},
       pollers: [],
       mobileListOnly: true
     };
@@ -1063,11 +1095,7 @@
     }
     function loadJSON(key, fallback) { try { return JSON.parse(localStorage.getItem(key) || "null") || fallback; } catch { return fallback; } }
     function saveJSON(key, value) { localStorage.setItem(key, JSON.stringify(value)); }
-    function saveState() {
-      saveJSON("linh_pinned_sessions", state.pinned);
-      saveJSON("linh_trashed_sessions", state.trash);
-      saveJSON("linh_reviewed_sessions", state.reviewed);
-    }
+    function saveState() {}
     let baseViewportHeight = Math.max(window.innerHeight || 0, document.documentElement.clientHeight || 0);
     function typingFieldIsActive() {
       const active = document.activeElement;
@@ -1117,6 +1145,46 @@
     function getSessionReviewKey(session) {
       return session?.lastSubstantive?.created_at || session?.last?.created_at || null;
     }
+    function isMetaRow(row) {
+      return row?.role === "admin_meta";
+    }
+
+    function parseMetaText(text) {
+      try { return JSON.parse(text || "{}"); } catch { return {}; }
+    }
+
+    function applyMetaRows(rows) {
+      const latestMeta = new Map();
+      rows.filter(isMetaRow).forEach(row => {
+        const prev = latestMeta.get(row.session_id);
+        if (!prev || new Date(row.created_at).getTime() >= new Date(prev.created_at).getTime()) {
+          latestMeta.set(row.session_id, row);
+        }
+      });
+
+      state.pinned = {};
+      state.trash = {};
+      state.reviewed = {};
+
+      latestMeta.forEach((row, sessionId) => {
+        const meta = parseMetaText(row.text);
+        if (meta.pinned) state.pinned[sessionId] = true;
+        if (meta.trashed) state.trash[sessionId] = meta.deleted_at || row.created_at || Date.now();
+        if (meta.reviewed_key) state.reviewed[sessionId] = meta.reviewed_key;
+      });
+    }
+
+    function queuePersistSessionMeta(sessionId) {
+      if (!sessionId) return;
+      const payload = {
+        pinned: !!state.pinned[sessionId],
+        trashed: !!state.trash[sessionId],
+        deleted_at: state.trash[sessionId] || null,
+        reviewed_key: state.reviewed[sessionId] || null
+      };
+      db.insertMeta(sessionId, payload).catch(console.error);
+    }
+
     function isSessionReviewed(session) {
       const key = getSessionReviewKey(session);
       return !!key && state.reviewed[session.session_id] === key;
@@ -1125,7 +1193,7 @@
       const key = getSessionReviewKey(session);
       if (!session?.session_id || !key) return;
       state.reviewed[session.session_id] = key;
-      saveState();
+      queuePersistSessionMeta(session.session_id);
     }
     function updateClassHealthIndicator(sessions) {
       const healthNode = document.getElementById("classHealthIndicator");
@@ -1142,14 +1210,12 @@
 
     function purgeExpiredTrash() {
       const now = Date.now();
-      let changed = false;
       Object.entries(state.trash).forEach(([sessionId, deletedAt]) => {
         if (now - deletedAt > 72 * 60 * 60 * 1000) {
           delete state.trash[sessionId];
-          changed = true;
+          queuePersistSessionMeta(sessionId);
         }
       });
-      if (changed) saveState();
     }
 
     const db = {
@@ -1161,13 +1227,19 @@
         const url = `${SUPABASE_URL}/rest/v1/messages?${qs({ select: "*", session_id: `eq.${sessionId}`, order: "created_at.asc" })}`;
         const res = await fetch(url, { headers: defaultHeaders });
         if (!res.ok) throw new Error(await res.text());
-        return await res.json();
+        const rows = await res.json();
+        return rows.filter(r => !isMetaRow(r));
       },
       async getAllMessages() {
         const url = `${SUPABASE_URL}/rest/v1/messages?${qs({ select: "*", order: "created_at.asc" })}`;
         const res = await fetch(url, { headers: defaultHeaders });
         if (!res.ok) throw new Error(await res.text());
         return await res.json();
+      },
+      async insertMeta(sessionId, payload) {
+        const row = { session_id: sessionId, role: "admin_meta", text: JSON.stringify(payload), read: true };
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/messages`, { method: "POST", headers: defaultHeaders, body: JSON.stringify(row) });
+        if (!res.ok) throw new Error(await res.text());
       },
       async markUserMessagesRead(sessionId) {
         const url = `${SUPABASE_URL}/rest/v1/messages?${qs({ session_id: `eq.${sessionId}`, role: "eq.user", read: "eq.false" })}`;
@@ -1178,39 +1250,44 @@
 
     function localReplyForStudent(messages, latest) {
       const text = (latest || "").trim();
-      if (CATEGORY_REPLIES[text]) return CATEGORY_REPLIES[text];
+      if (["1", "2", "3", "4"].includes(text)) return makeStudentFollowUp(text, messages?.[0]?.session_id || text);
 
       const priorUser = messages.filter(m => m.role === "user").map(m => (m.text || "").trim());
-      const hasCategoryPick = priorUser.some(x => ["1", "2", "3", "4"].includes(x));
+      const firstCategoryPick = priorUser.find(x => ["1", "2", "3", "4"].includes(x));
+      const hasCategoryPick = !!firstCategoryPick;
       const lower = text.toLowerCase();
 
       if (/^(ok|okay|thanks|thank you|thx|haha|hehe|hi|hello)$/i.test(text)) {
-        return "Got it 😊 Linh will check soon.";
+        return makeStudentRelayAck(text);
       }
       if (hasCategoryPick && priorUser.length <= 2) {
-        return "Got it 🌿 I'll pass that along to Linh.";
+        return makeStudentRelayAck(`${firstCategoryPick}|${text}`);
       }
       if (/slow|too fast|lecture fast|teaching too fast/.test(lower)) {
-        return "Got it — I'll pass that feedback to Linh.";
+        return makeStudentRelayAck(`pace|${text}`);
       }
       if (/deadline|assignment|quiz|exam|grade/.test(lower)) {
-        return "Message received 💌 I'll take a look.";
+        return makeStudentRelayAck(`school|${text}`);
       }
       return null;
     }
 
     async function askAI(messages) {
+      const systemPrompt = {
+        role: "system",
+        content: `You are ${BOT_NAME}'s student inbox assistant. Keep replies short and natural. If a student picked 1 2 3 or 4, ask a direct follow up question. For feedback, ask exactly what thought they want to share. When acknowledging a real student message, use this style: I'll let her know with one positive icon and the joke no eye contact established. Do not use any dash characters.`
+      };
+      const chatMessages = [systemPrompt, ...messages.map(m => ({ role: m.role === "user" ? "user" : "assistant", content: m.text }))];
       const res = await fetch(`${SUPABASE_URL}/functions/v1/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${SUPABASE_ANON_KEY}` },
-        body: JSON.stringify({ messages: messages.map(m => ({ role: m.role === "user" ? "user" : "assistant", content: m.text })) })
+        body: JSON.stringify({ messages: chatMessages })
       });
       const raw = await res.text();
       if (!res.ok) throw new Error(raw);
       const data = JSON.parse(raw);
-      let reply = data.reply || "Got it! Linh will get back to you soon 😊";
-      reply = reply.replaceAll("Tiny", BOT_NAME);
-      return reply;
+      let reply = data.reply || makeStudentRelayAck(messages?.[messages.length - 1]?.text || "fallback");
+      return sanitizeStudentReply(reply, messages?.[messages.length - 1]?.text || "fallback");
     }
 
     function makeBotBubble(text, ts) {
@@ -1395,7 +1472,7 @@
         } catch (err) {
           console.error(err);
           typing.remove();
-          msgs.appendChild(makeBotBubble(`Got it 😊 ${BOT_NAME} will get back to you soon.`, Date.now()));
+          msgs.appendChild(makeBotBubble(makeStudentRelayAck(text), Date.now()));
           scrollBottom(msgs);
         } finally {
           busy = false;
@@ -1447,8 +1524,9 @@
     }
 
     function collectSessionsFromMessages(rows) {
+      const contentRows = rows.filter(r => !isMetaRow(r));
       const map = new Map();
-      rows.forEach(r => {
+      contentRows.forEach(r => {
         if (!map.has(r.session_id)) map.set(r.session_id, []);
         map.get(r.session_id).push(r);
       });
@@ -1512,23 +1590,18 @@
     }
 
     function computeClassHealth(sessions) {
-      const active = sessions.filter(s => !s.trashed && s.lastSubstantive);
-      const recent = active.filter(s => {
-        const stamp = new Date((s.lastSubstantive?.created_at) || (s.last?.created_at) || Date.now()).getTime();
-        return Date.now() - stamp < 60 * 60 * 1000;
-      });
-      const relevant = recent.filter(s => (s.pendingHuman || s.summarizeOnly) && !s.reviewed);
+      const cards = buildCopilotFeed(sessions).filter(card => card.type !== "pinned");
+      if (!cards.length) return { text: "Status: Stable", cls: "health-stable" };
+
       let urgentCount = 0;
       let reviewCount = 0;
-
-      relevant.forEach(s => {
-        const tag = classifySmartTag(s);
-        if (tag.tone === "red") urgentCount++;
-        else if (tag.tone === "baby-blue") reviewCount++;
+      cards.forEach(card => {
+        if (card.severity === "red") urgentCount++;
+        else if (card.severity === "amber") reviewCount++;
       });
 
       if (urgentCount >= 2) return { text: "Status: Urgent", cls: "health-urgent" };
-      if (urgentCount >= 1 || reviewCount >= 3) return { text: "Status: Review", cls: "health-review" };
+      if (urgentCount >= 1 || reviewCount >= 1) return { text: "Status: Review", cls: "health-review" };
       return { text: "Status: Stable", cls: "health-stable" };
     }
 
@@ -1699,8 +1772,9 @@
     }
 
     async function refreshAdminData(force) {
-      purgeExpiredTrash();
       const rows = await db.getAllMessages();
+      applyMetaRows(rows);
+      purgeExpiredTrash();
       const sessions = collectSessionsFromMessages(rows);
       const snapshotSig = messageSignature(rows);
       if (!force && snapshotSig === state.sessionsSnapshotSig) return;
@@ -1728,13 +1802,7 @@
       left.innerHTML = "";
       right.innerHTML = "";
 
-      const toolbar = el("div", "toolbar toolbar-visible");
-      const leftBits = el("div", "toolbar-left");
-      const toggleBtn = el("button", `chip ${state.revealOriginal ? "on" : ""}`.trim(), state.revealOriginal ? "Hide original chats" : "");
-      toggleBtn.onclick = () => { state.revealOriginal = !state.revealOriginal; renderLinhAI(sessions); };
-      leftBits.appendChild(toggleBtn);
-      toolbar.appendChild(leftBits);
-      left.appendChild(toolbar);
+      state.revealOriginal = false;
 
       const feed = el("div", "feed");
       updateClassHealthIndicator(sessions);
@@ -1787,7 +1855,7 @@
             pinBtn.onclick = (e) => {
               e.stopPropagation();
               if (state.pinned[card.session_id]) delete state.pinned[card.session_id]; else state.pinned[card.session_id] = true;
-              saveState();
+              queuePersistSessionMeta(card.session_id);
               refreshAdminData(true).catch(console.error);
             };
             actions.appendChild(pinBtn);
@@ -1830,8 +1898,10 @@
       const leftBits = el("div", "toolbar-left");
       const deleteBtn = el("button", "chip", "Trash all unpinned");
       deleteBtn.onclick = () => {
-        activeSessions.filter(s => !s.pinned).forEach(s => state.trash[s.session_id] = Date.now());
-        saveState();
+        activeSessions.filter(s => !s.pinned).forEach(s => {
+          state.trash[s.session_id] = Date.now();
+          queuePersistSessionMeta(s.session_id);
+        });
         if (state.selectedSession && state.trash[state.selectedSession]) state.selectedSession = null;
         refreshAdminData(true).catch(console.error);
       };
@@ -1875,7 +1945,7 @@
         recoverBtn.onclick = (e) => {
           e.stopPropagation();
           delete state.trash[s.session_id];
-          saveState();
+          queuePersistSessionMeta(s.session_id);
           refreshAdminData(true).catch(console.error);
         };
         titleRow.appendChild(recoverBtn);
@@ -1897,9 +1967,9 @@
       leftHead.innerHTML = `<div class="thread-title">${getDisplayName(target.session_id)}</div><div class="thread-sub">Deleted ${fmtRelative(target.deleted_at)} • auto-purge in 3 days</div>`;
       const rightHead = el("div", "toolbar-right thread-actions");
       const restore = el("button", "mini-btn primary", "Recover");
-      restore.onclick = () => { delete state.trash[target.session_id]; saveState(); refreshAdminData(true).catch(console.error); };
+      restore.onclick = () => { delete state.trash[target.session_id]; queuePersistSessionMeta(target.session_id); refreshAdminData(true).catch(console.error); };
       const purge = el("button", "mini-btn danger", "Delete now");
-      purge.onclick = () => { delete state.trash[target.session_id]; delete state.pinned[target.session_id]; saveState(); state.selectedSession = null; refreshAdminData(true).catch(console.error); };
+      purge.onclick = () => { delete state.trash[target.session_id]; delete state.pinned[target.session_id]; queuePersistSessionMeta(target.session_id); state.selectedSession = null; refreshAdminData(true).catch(console.error); };
       rightHead.appendChild(restore); rightHead.appendChild(purge);
       head.appendChild(leftHead); head.appendChild(rightHead);
       shell.appendChild(head);
@@ -1923,8 +1993,10 @@
       leftBits.appendChild(pinnedChip);
       const deleteBtn = el("button", "chip", "Remove all unpinned to trash");
       deleteBtn.onclick = () => {
-        activeSessions.filter(s => !s.pinned).forEach(s => state.trash[s.session_id] = Date.now());
-        saveState();
+        activeSessions.filter(s => !s.pinned).forEach(s => {
+          state.trash[s.session_id] = Date.now();
+          queuePersistSessionMeta(s.session_id);
+        });
         if (state.selectedSession && state.trash[state.selectedSession]) state.selectedSession = null;
         refreshAdminData(true).catch(console.error);
       };
@@ -1976,7 +2048,7 @@
         pinIcon.onclick = async (e) => {
           e.stopPropagation();
           if (state.pinned[s.session_id]) delete state.pinned[s.session_id]; else state.pinned[s.session_id] = true;
-          saveState();
+          queuePersistSessionMeta(s.session_id);
           await refreshAdminData(true).catch(console.error);
         };
         item.appendChild(pinIcon);
@@ -2016,14 +2088,14 @@
       const pinBtn = el("button", "mini-btn", session.pinned ? "Unpin" : "Pin");
       pinBtn.onclick = () => {
         if (state.pinned[session.session_id]) delete state.pinned[session.session_id]; else state.pinned[session.session_id] = true;
-        saveState();
+        queuePersistSessionMeta(session.session_id);
         refreshAdminData(true).catch(console.error);
       };
       const trashBtn = el("button", "mini-btn danger", "Trash");
       trashBtn.onclick = () => {
         if (state.pinned[session.session_id]) return;
         state.trash[session.session_id] = Date.now();
-        saveState();
+        queuePersistSessionMeta(session.session_id);
         if (state.selectedSession === session.session_id) state.selectedSession = null;
         refreshAdminData(true).catch(console.error);
       };
