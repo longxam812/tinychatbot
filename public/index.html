@@ -458,6 +458,14 @@
         inset 0 1px 0 rgba(255,255,255,.82),
         0 10px 24px rgba(96,84,67,.06);
     }
+    body.keyboard-open .composer {
+      padding-bottom: 12px;
+    }
+    body.keyboard-open .msgs,
+    body.keyboard-open .thread-scroll {
+      scroll-padding-bottom: 18px;
+    }
+
     .send-btn {
       width: 52px;
       height: 52px;
@@ -923,15 +931,16 @@
 
     const BOT_NAME = "Linh Tran";
     const BOT_AVATAR = "🦔";
-    const BOT_HEADER = "Linh 🦔";
+    const BOT_HEADER = BOT_NAME;
+    const BOT_CHAT_LABEL = "Chat";
     const AI_ALIAS = Math.random() < 0.5 ? "Linh Junior" : "Mini Linh";
-    const STUDENT_WELCOME = `Hi! What would you like to send to Linh? 😊\n\n1️⃣ Question\n2️⃣ Feedback\n3️⃣ Inquiry\n4️⃣ Other request`;
+    const STUDENT_WELCOME = `Hi! What would you like to send to ${BOT_NAME}? 😊\n\n1️⃣ Question\n2️⃣ Feedback\n3️⃣ Inquiry\n4️⃣ Other request`;
     const CATEGORY_LABELS = { "1": "question", "2": "feedback", "3": "inquiry", "4": "other request" };
     const CATEGORY_REPLIES = {
-      "1": "Got it 😊 What question would you like Linh to help with?",
-      "2": "Thanks 💛 What feedback would you like Linh to see?",
-      "3": "Sure 🌿 What would you like to ask Linh about?",
-      "4": "Okeee ✨ What would you like to send to Linh?"
+      "1": `Got it 😊 What question would you like ${BOT_NAME} to help with?`,
+      "2": `Thanks 💛 What feedback would you like ${BOT_NAME} to see?`,
+      "3": `Sure 🌿 What would you like to ask ${BOT_NAME} about?`,
+      "4": `Okeee ✨ What would you like to send to ${BOT_NAME}?`
     };
 
     const defaultHeaders = {
@@ -1059,17 +1068,30 @@
       saveJSON("linh_trashed_sessions", state.trash);
       saveJSON("linh_reviewed_sessions", state.reviewed);
     }
+    let baseViewportHeight = Math.max(window.innerHeight || 0, document.documentElement.clientHeight || 0);
+    function typingFieldIsActive() {
+      const active = document.activeElement;
+      return !!(active && (active.matches("input, textarea") || active.isContentEditable));
+    }
     function setViewportHeight() {
       const vv = window.visualViewport;
-      const h = vv ? vv.height : window.innerHeight;
+      const raw = vv ? vv.height : window.innerHeight;
+      const activeTyping = typingFieldIsActive();
+      if (!activeTyping) {
+        baseViewportHeight = Math.max(baseViewportHeight, raw || 0, window.innerHeight || 0, document.documentElement.clientHeight || 0);
+      }
+      const h = activeTyping ? baseViewportHeight : Math.max(raw || 0, window.innerHeight || 0, baseViewportHeight || 0);
       document.documentElement.style.setProperty("--viewport-height", `${Math.round(h)}px`);
+      document.body.classList.toggle("keyboard-open", activeTyping);
     }
     setViewportHeight();
     window.addEventListener("resize", setViewportHeight);
-    if (window.visualViewport) {
-      visualViewport.addEventListener("resize", setViewportHeight);
-      visualViewport.addEventListener("scroll", setViewportHeight);
-    }
+    window.addEventListener("orientationchange", () => {
+      baseViewportHeight = Math.max(window.innerHeight || 0, document.documentElement.clientHeight || 0);
+      setViewportHeight();
+    });
+    document.addEventListener("focusin", setViewportHeight);
+    document.addEventListener("focusout", () => setTimeout(setViewportHeight, 50));
 
     function fmtTime(ts) {
       return new Date(ts).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
@@ -1195,7 +1217,7 @@
       const row = el("div", "msg-row");
       row.appendChild(el("div", "avatar small msg-avatar", BOT_AVATAR));
       const col = el("div", "msg-col");
-      col.appendChild(el("div", "msg-name", BOT_NAME));
+      col.appendChild(el("div", "msg-name", BOT_CHAT_LABEL));
       col.appendChild(el("div", "bubble", text));
       if (ts) col.appendChild(el("div", "ts", fmtTime(ts)));
       row.appendChild(col);
@@ -1216,7 +1238,7 @@
       const row = el("div", "msg-row");
       row.appendChild(el("div", "avatar small msg-avatar", BOT_AVATAR));
       const col = el("div", "msg-col");
-      col.appendChild(el("div", "msg-name", BOT_NAME));
+      col.appendChild(el("div", "msg-name", BOT_CHAT_LABEL));
       const bubble = el("div", "bubble");
       const typing = el("div", "typing");
       typing.appendChild(el("span", "dot"));
@@ -1490,11 +1512,16 @@
     }
 
     function computeClassHealth(sessions) {
-      const active = sessions.filter(s => !s.trashed && s.lastSubstantive && !s.reviewed);
+      const active = sessions.filter(s => !s.trashed && s.lastSubstantive);
+      const recent = active.filter(s => {
+        const stamp = new Date((s.lastSubstantive?.created_at) || (s.last?.created_at) || Date.now()).getTime();
+        return Date.now() - stamp < 60 * 60 * 1000;
+      });
+      const relevant = recent.filter(s => (s.pendingHuman || s.summarizeOnly) && !s.reviewed);
       let urgentCount = 0;
       let reviewCount = 0;
 
-      active.forEach(s => {
+      relevant.forEach(s => {
         const tag = classifySmartTag(s);
         if (tag.tone === "red") urgentCount++;
         else if (tag.tone === "baby-blue") reviewCount++;
@@ -1799,7 +1826,7 @@
       left.innerHTML = "";
       right.innerHTML = "";
 
-      const toolbar = el("div", "toolbar");
+      const toolbar = el("div", "toolbar toolbar-visible");
       const leftBits = el("div", "toolbar-left");
       const deleteBtn = el("button", "chip", "Trash all unpinned");
       deleteBtn.onclick = () => {
